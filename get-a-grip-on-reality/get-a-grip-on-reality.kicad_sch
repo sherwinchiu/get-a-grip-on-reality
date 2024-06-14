@@ -1,0 +1,105 @@
+(kicad_sch (version 20230121) (generator eeschema)
+
+  (uuid baa0c64e-005f-4609-8fc2-3159870af962)
+
+  (paper "A4")
+
+  (title_block
+    (title "Main")
+    (date "2024-06-14")
+    (rev "V1.0.0")
+  )
+
+  (lib_symbols
+  )
+
+
+  (sheet (at 222.25 43.18) (size 35.56 48.26) (fields_autoplaced)
+    (stroke (width 0.1524) (type solid))
+    (fill (color 0 0 0 0.0000))
+    (uuid 215e2fab-514d-476e-baee-c41c25f43c37)
+    (property "Sheetname" "Motors" (at 222.25 42.1034 0)
+      (effects (font (size 2 2)) (justify left bottom))
+    )
+    (property "Sheetfile" "Motors.kicad_sch" (at 222.25 92.3166 0)
+      (effects (font (size 2 2)) (justify left top))
+    )
+    (instances
+      (project "get-a-grip-on-reality"
+        (path "/baa0c64e-005f-4609-8fc2-3159870af962" (page "5"))
+      )
+    )
+  )
+
+  (sheet (at 90.17 167.64) (size 48.26 21.59) (fields_autoplaced)
+    (stroke (width 0.1524) (type solid))
+    (fill (color 0 0 0 0.0000))
+    (uuid 9688e5e2-596f-4b3e-8875-d3add90a032c)
+    (property "Sheetname" "Power" (at 90.17 166.5634 0)
+      (effects (font (size 2 2)) (justify left bottom))
+    )
+    (property "Sheetfile" "Power.kicad_sch" (at 90.17 190.1066 0)
+      (effects (font (size 2 2)) (justify left top))
+    )
+    (instances
+      (project "get-a-grip-on-reality"
+        (path "/baa0c64e-005f-4609-8fc2-3159870af962" (page "6"))
+      )
+    )
+  )
+
+  (sheet (at 165.1 43.18) (size 46.99 107.95) (fields_autoplaced)
+    (stroke (width 0.1524) (type solid))
+    (fill (color 0 0 0 0.0000))
+    (uuid 97bd394b-2f9a-41c1-a3db-ce9902ed1590)
+    (property "Sheetname" "Drivers" (at 165.1 42.1034 0)
+      (effects (font (size 2 2)) (justify left bottom))
+    )
+    (property "Sheetfile" "Drivers.kicad_sch" (at 165.1 152.0066 0)
+      (effects (font (size 2 2)) (justify left top))
+    )
+    (instances
+      (project "get-a-grip-on-reality"
+        (path "/baa0c64e-005f-4609-8fc2-3159870af962" (page "3"))
+      )
+    )
+  )
+
+  (sheet (at 26.67 43.18) (size 48.26 73.66) (fields_autoplaced)
+    (stroke (width 0.1524) (type solid))
+    (fill (color 0 0 0 0.0000))
+    (uuid 9a9bf700-d10a-497d-8bed-32e73fee329a)
+    (property "Sheetname" "Inputs" (at 26.67 42.1034 0)
+      (effects (font (size 2 2)) (justify left bottom))
+    )
+    (property "Sheetfile" "Inputs.kicad_sch" (at 26.67 117.7166 0)
+      (effects (font (size 2 2)) (justify left top))
+    )
+    (instances
+      (project "get-a-grip-on-reality"
+        (path "/baa0c64e-005f-4609-8fc2-3159870af962" (page "4"))
+      )
+    )
+  )
+
+  (sheet (at 90.17 43.18) (size 62.23 107.95) (fields_autoplaced)
+    (stroke (width 0.1524) (type solid))
+    (fill (color 0 0 0 0.0000))
+    (uuid ac4bf6b8-92c6-4d58-8d59-9dba1bb4caf0)
+    (property "Sheetname" "MCU" (at 90.17 42.1034 0)
+      (effects (font (size 2 2)) (justify left bottom))
+    )
+    (property "Sheetfile" "MCU.kicad_sch" (at 90.17 152.0066 0)
+      (effects (font (size 2 2)) (justify left top))
+    )
+    (instances
+      (project "get-a-grip-on-reality"
+        (path "/baa0c64e-005f-4609-8fc2-3159870af962" (page "2"))
+      )
+    )
+  )
+
+  (sheet_instances
+    (path "/" (page "1"))
+  )
+)
