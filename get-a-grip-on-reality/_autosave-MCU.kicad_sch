@@ -3327,16 +3327,16 @@
 		)
 	)
 	(junction
-		(at 267.97 36.83)
-		(diameter 0)
-		(color 0 0 0 0)
-		(uuid "01eaa5d1-c461-49ff-867f-57d4b6b372ec")
-	)
-	(junction
 		(at 48.26 36.83)
 		(diameter 0)
 		(color 0 0 0 0)
 		(uuid "0964276e-06f0-459c-87ee-c8b3352664fa")
+	)
+	(junction
+		(at 267.97 39.37)
+		(diameter 0)
+		(color 0 0 0 0)
+		(uuid "172eb553-558b-452d-9d4d-71d40a1497ab")
 	)
 	(junction
 		(at 223.52 104.14)
@@ -3463,6 +3463,16 @@
 		(diameter 0)
 		(color 0 0 0 0)
 		(uuid "e02d331d-9ce3-444f-8171-de0136231d11")
+	)
+	(wire
+		(pts
+			(xy 267.97 39.37) (xy 267.97 36.83)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "0693659a-990d-496e-a795-630ae87c89d3")
 	)
 	(wire
 		(pts
@@ -3776,7 +3786,7 @@
 	)
 	(wire
 		(pts
-			(xy 267.97 62.23) (xy 267.97 36.83)
+			(xy 267.97 62.23) (xy 267.97 39.37)
 		)
 		(stroke
 			(width 0)
@@ -4106,16 +4116,6 @@
 	)
 	(wire
 		(pts
-			(xy 227.33 36.83) (xy 227.33 39.37)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "b7d2cc8f-5d8c-48da-a8f0-0034980029b4")
-	)
-	(wire
-		(pts
 			(xy 76.2 62.23) (xy 96.52 62.23)
 		)
 		(stroke
@@ -4176,7 +4176,7 @@
 	)
 	(wire
 		(pts
-			(xy 267.97 36.83) (xy 227.33 36.83)
+			(xy 267.97 39.37) (xy 227.33 39.37)
 		)
 		(stroke
 			(width 0)
@@ -5015,10 +5015,9 @@
 		(in_bom yes)
 		(on_board yes)
 		(dnp no)
-		(fields_autoplaced yes)
 		(uuid "3f7d54c7-0b21-425e-9bac-6e9c8f4e3df5")
 		(property "Reference" "C7"
-			(at 68.58 85.0899 0)
+			(at 78.994 85.09 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -5027,7 +5026,7 @@
 			)
 		)
 		(property "Value" "0.1u"
-			(at 68.58 87.6299 0)
+			(at 80.772 87.63 0)
 			(effects
 				(font
 					(size 1.27 1.27)
