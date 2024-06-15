@@ -2239,6 +2239,12 @@
 		(uuid "b87382bd-df8c-4f90-ab1f-c67081e5f10b")
 	)
 	(junction
+		(at 128.27 78.74)
+		(diameter 0)
+		(color 0 0 0 0)
+		(uuid "be8e6565-a1e0-45c5-8e3b-643c3a2343da")
+	)
+	(junction
 		(at 54.61 78.74)
 		(diameter 0)
 		(color 0 0 0 0)
@@ -2310,6 +2316,16 @@
 	)
 	(wire
 		(pts
+			(xy 128.27 102.87) (xy 128.27 78.74)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "14abb957-a731-475a-93b8-1c4f81676f18")
+	)
+	(wire
+		(pts
 			(xy 196.85 92.71) (xy 196.85 95.25)
 		)
 		(stroke
@@ -2340,6 +2356,16 @@
 	)
 	(wire
 		(pts
+			(xy 105.41 110.49) (xy 128.27 110.49)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "20eec82c-b729-426c-a918-6be45d04ea1a")
+	)
+	(wire
+		(pts
 			(xy 231.14 86.36) (xy 231.14 85.09)
 		)
 		(stroke
@@ -2360,7 +2386,7 @@
 	)
 	(wire
 		(pts
-			(xy 132.08 73.66) (xy 132.08 74.93)
+			(xy 128.27 77.47) (xy 128.27 78.74)
 		)
 		(stroke
 			(width 0)
@@ -2407,16 +2433,6 @@
 			(type default)
 		)
 		(uuid "3966aa6f-723e-4c7b-915b-fec256e326cb")
-	)
-	(wire
-		(pts
-			(xy 128.27 78.74) (xy 128.27 110.49)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "55f46620-c120-4fd9-8005-618cf4dba454")
 	)
 	(wire
 		(pts
@@ -2527,16 +2543,6 @@
 			(type default)
 		)
 		(uuid "a1446911-9c06-4f96-a9fa-314e4a081480")
-	)
-	(wire
-		(pts
-			(xy 128.27 110.49) (xy 105.41 110.49)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "a7c4860b-58f8-4919-aedf-3ae57ade2fc6")
 	)
 	(wire
 		(pts
@@ -2885,6 +2891,76 @@
 			(project "get-a-grip-on-reality"
 				(path "/baa0c64e-005f-4609-8fc2-3159870af962/9688e5e2-596f-4b3e-8875-d3add90a032c"
 					(reference "#PWR02")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "Device:C")
+		(at 128.27 106.68 0)
+		(unit 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(dnp no)
+		(fields_autoplaced yes)
+		(uuid "1c931f5b-aacf-493d-9124-fbd68f2b6632")
+		(property "Reference" "C5"
+			(at 132.08 105.4099 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+		(property "Value" "1u"
+			(at 132.08 107.9499 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+		(property "Footprint" ""
+			(at 129.2352 110.49 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Datasheet" "~"
+			(at 128.27 106.68 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Description" "Unpolarized capacitor"
+			(at 128.27 106.68 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(pin "1"
+			(uuid "a15223e9-6016-40c2-86ab-262fd1d0cbad")
+		)
+		(pin "2"
+			(uuid "476ed11d-953a-472d-98b0-2ed621aef1c7")
+		)
+		(instances
+			(project "get-a-grip-on-reality"
+				(path "/baa0c64e-005f-4609-8fc2-3159870af962/9688e5e2-596f-4b3e-8875-d3add90a032c"
+					(reference "C5")
 					(unit 1)
 				)
 			)
@@ -3508,7 +3584,7 @@
 	(symbol
 		(lib_name "+BATT_2")
 		(lib_id "power:+BATT")
-		(at 132.08 73.66 0)
+		(at 128.27 77.47 0)
 		(unit 1)
 		(exclude_from_sim no)
 		(in_bom yes)
@@ -3516,7 +3592,7 @@
 		(dnp no)
 		(uuid "a16d5634-49a3-4745-82f9-114f9aac0def")
 		(property "Reference" "#PWR09"
-			(at 132.08 77.47 0)
+			(at 128.27 81.28 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -3525,7 +3601,7 @@
 			)
 		)
 		(property "Value" "+BATT"
-			(at 131.572 68.326 0)
+			(at 127.762 72.136 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -3533,7 +3609,7 @@
 			)
 		)
 		(property "Footprint" ""
-			(at 132.08 73.66 0)
+			(at 128.27 77.47 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -3542,7 +3618,7 @@
 			)
 		)
 		(property "Datasheet" ""
-			(at 132.08 73.66 0)
+			(at 128.27 77.47 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -3551,7 +3627,7 @@
 			)
 		)
 		(property "Description" "Power symbol creates a global label with name \"+BATT\""
-			(at 132.08 73.66 0)
+			(at 128.27 77.47 0)
 			(effects
 				(font
 					(size 1.27 1.27)
