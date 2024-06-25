@@ -2698,6 +2698,10 @@
 		(uuid "9ba0b5af-4c48-43bd-aeed-abf2b94f6568")
 	)
 	(no_connect
+		(at 96.52 144.78)
+		(uuid "e52005db-1bf8-4a2b-9f2b-679ccd2b16cf")
+	)
+	(no_connect
 		(at 96.52 147.32)
 		(uuid "e61d761d-2721-4980-8d12-58834bcefc9d")
 	)
@@ -3312,7 +3316,7 @@
 		(uuid "ff296ba4-53f1-4cdf-99a6-d7c325183e88")
 	)
 	(rectangle
-		(start 22.352 102.87)
+		(start 21.59 102.87)
 		(end 158.242 171.45)
 		(stroke
 			(width 0)
@@ -3336,8 +3340,8 @@
 		(uuid 70720cfc-7c55-4991-a579-75486a38bf5f)
 	)
 	(rectangle
-		(start 171.196 22.86)
-		(end 249.936 91.694)
+		(start 21.59 26.416)
+		(end 100.33 95.25)
 		(stroke
 			(width 0)
 			(type default)
@@ -3347,21 +3351,9 @@
 		)
 		(uuid 8e085d4a-9c58-4aaa-ae59-e4198a2cdae8)
 	)
-	(rectangle
-		(start 22.352 22.86)
-		(end 158.242 91.44)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(fill
-			(type none)
-		)
-		(uuid e30c79e4-8837-4173-9371-c8358f9c7ef0)
-	)
 	(text "Vbat = 7V to 8.4V\nVout = 5V\nIout = 15A"
 		(exclude_from_sim no)
-		(at 238.506 27.94 0)
+		(at 88.9 31.496 0)
 		(effects
 			(font
 				(size 1.27 1.27)
@@ -3371,7 +3363,7 @@
 	)
 	(text "Buck Regulator"
 		(exclude_from_sim no)
-		(at 171.196 21.844 0)
+		(at 21.59 25.4 0)
 		(effects
 			(font
 				(size 1.27 1.27)
@@ -3400,17 +3392,6 @@
 			(justify left bottom)
 		)
 		(uuid "c6c18db4-cd13-4c38-a283-cf6b5f6804cf")
-	)
-	(text "Battery Charging\n"
-		(exclude_from_sim no)
-		(at 24.384 21.59 0)
-		(effects
-			(font
-				(size 1.27 1.27)
-			)
-			(justify left bottom)
-		)
-		(uuid "d2dfe1bd-d9ea-4069-b34d-f981876e33e9")
 	)
 	(text "Battery Holder"
 		(exclude_from_sim no)
@@ -3444,6 +3425,72 @@
 			(justify left bottom)
 		)
 		(uuid "ad0eea4e-9b3c-4251-889d-f151b1c4c361")
+	)
+	(symbol
+		(lib_id "power:+5V")
+		(at 139.7 153.67 0)
+		(unit 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(dnp no)
+		(fields_autoplaced yes)
+		(uuid "05a929b3-2c10-435b-bab5-df2d46dff891")
+		(property "Reference" "#PWR020"
+			(at 139.7 157.48 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Value" "+5V"
+			(at 139.7 148.59 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Footprint" ""
+			(at 139.7 153.67 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Datasheet" ""
+			(at 139.7 153.67 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Description" "Power symbol creates a global label with name \"+5V\""
+			(at 139.7 153.67 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(pin "1"
+			(uuid "f452fec7-9879-461c-80b2-37bf7ee14e45")
+		)
+		(instances
+			(project "get-a-grip-on-reality"
+				(path "/baa0c64e-005f-4609-8fc2-3159870af962/9688e5e2-596f-4b3e-8875-d3add90a032c"
+					(reference "#PWR020")
+					(unit 1)
+				)
+			)
+		)
 	)
 	(symbol
 		(lib_id "power:+5V")
@@ -3655,6 +3702,76 @@
 		)
 	)
 	(symbol
+		(lib_id "Diode:ESD9B5.0ST5G")
+		(at 139.7 157.48 90)
+		(unit 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(dnp no)
+		(fields_autoplaced yes)
+		(uuid "1ca976ed-908f-479b-bec4-cc5a12e88f73")
+		(property "Reference" "D5"
+			(at 142.24 156.2099 90)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify right)
+			)
+		)
+		(property "Value" "ESD9B5.0ST5G"
+			(at 142.24 158.7499 90)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify right)
+			)
+		)
+		(property "Footprint" "Diode_SMD:D_SOD-923"
+			(at 139.7 157.48 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Datasheet" "https://www.onsemi.com/pub/Collateral/ESD9B-D.PDF"
+			(at 139.7 157.48 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Description" "ESD protection diode, 5.0Vrwm, SOD-923"
+			(at 139.7 157.48 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(pin "1"
+			(uuid "a11d5839-2d94-4ca7-b6a8-c6b8533d343d")
+		)
+		(pin "2"
+			(uuid "6dd8f5aa-b1b3-4ec4-8190-bc336b893510")
+		)
+		(instances
+			(project "get-a-grip-on-reality"
+				(path "/baa0c64e-005f-4609-8fc2-3159870af962/9688e5e2-596f-4b3e-8875-d3add90a032c"
+					(reference "D5")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
 		(lib_name "GND_1")
 		(lib_id "power:GND")
 		(at 116.84 111.76 0)
@@ -3716,76 +3833,6 @@
 			(project "get-a-grip-on-reality"
 				(path "/baa0c64e-005f-4609-8fc2-3159870af962/9688e5e2-596f-4b3e-8875-d3add90a032c"
 					(reference "#PWR024")
-					(unit 1)
-				)
-			)
-		)
-	)
-	(symbol
-		(lib_id "Diode:ESD9B5.0ST5G")
-		(at 40.64 185.42 90)
-		(unit 1)
-		(exclude_from_sim no)
-		(in_bom yes)
-		(on_board yes)
-		(dnp no)
-		(fields_autoplaced yes)
-		(uuid "2e42b3e8-01dd-482e-9f3d-9b4f584f2c66")
-		(property "Reference" "D5"
-			(at 43.18 184.1499 90)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(justify right)
-			)
-		)
-		(property "Value" "ESD9B5.0ST5G"
-			(at 43.18 186.6899 90)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(justify right)
-			)
-		)
-		(property "Footprint" "Diode_SMD:D_SOD-923"
-			(at 40.64 185.42 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(hide yes)
-			)
-		)
-		(property "Datasheet" "https://www.onsemi.com/pub/Collateral/ESD9B-D.PDF"
-			(at 40.64 185.42 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(hide yes)
-			)
-		)
-		(property "Description" "ESD protection diode, 5.0Vrwm, SOD-923"
-			(at 40.64 185.42 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(hide yes)
-			)
-		)
-		(pin "1"
-			(uuid "cae84cf2-50a7-4c69-8a0f-515bdaeeb1d1")
-		)
-		(pin "2"
-			(uuid "4090a5f8-c4e4-4606-b3bd-f21bfe03bf9e")
-		)
-		(instances
-			(project ""
-				(path "/baa0c64e-005f-4609-8fc2-3159870af962/9688e5e2-596f-4b3e-8875-d3add90a032c"
-					(reference "D5")
 					(unit 1)
 				)
 			)
@@ -4194,72 +4241,6 @@
 			(project ""
 				(path "/baa0c64e-005f-4609-8fc2-3159870af962/9688e5e2-596f-4b3e-8875-d3add90a032c"
 					(reference "#PWR016")
-					(unit 1)
-				)
-			)
-		)
-	)
-	(symbol
-		(lib_id "power:+5V")
-		(at 40.64 181.61 0)
-		(unit 1)
-		(exclude_from_sim no)
-		(in_bom yes)
-		(on_board yes)
-		(dnp no)
-		(fields_autoplaced yes)
-		(uuid "6d74c2e5-2340-4d00-be0b-2af2b3f98225")
-		(property "Reference" "#PWR028"
-			(at 40.64 185.42 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(hide yes)
-			)
-		)
-		(property "Value" "+5V"
-			(at 40.64 176.53 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Footprint" ""
-			(at 40.64 181.61 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(hide yes)
-			)
-		)
-		(property "Datasheet" ""
-			(at 40.64 181.61 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(hide yes)
-			)
-		)
-		(property "Description" "Power symbol creates a global label with name \"+5V\""
-			(at 40.64 181.61 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(hide yes)
-			)
-		)
-		(pin "1"
-			(uuid "f91e3c7f-7dc3-49fe-bda0-259b71878ced")
-		)
-		(instances
-			(project "get-a-grip-on-reality"
-				(path "/baa0c64e-005f-4609-8fc2-3159870af962/9688e5e2-596f-4b3e-8875-d3add90a032c"
-					(reference "#PWR028")
 					(unit 1)
 				)
 			)
@@ -4801,73 +4782,6 @@
 	(symbol
 		(lib_name "GND_1")
 		(lib_id "power:GND")
-		(at 40.64 189.23 0)
-		(unit 1)
-		(exclude_from_sim no)
-		(in_bom yes)
-		(on_board yes)
-		(dnp no)
-		(fields_autoplaced yes)
-		(uuid "b6e5bbb7-3cce-4ada-b4fc-ac16e42ecd57")
-		(property "Reference" "#PWR027"
-			(at 40.64 195.58 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(hide yes)
-			)
-		)
-		(property "Value" "GND"
-			(at 40.64 194.31 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Footprint" ""
-			(at 40.64 189.23 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(hide yes)
-			)
-		)
-		(property "Datasheet" ""
-			(at 40.64 189.23 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(hide yes)
-			)
-		)
-		(property "Description" "Power symbol creates a global label with name \"GND\" , ground"
-			(at 40.64 189.23 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(hide yes)
-			)
-		)
-		(pin "1"
-			(uuid "43b2542a-7875-445f-b9e6-ab2adbdfa4c8")
-		)
-		(instances
-			(project "get-a-grip-on-reality"
-				(path "/baa0c64e-005f-4609-8fc2-3159870af962/9688e5e2-596f-4b3e-8875-d3add90a032c"
-					(reference "#PWR027")
-					(unit 1)
-				)
-			)
-		)
-	)
-	(symbol
-		(lib_name "GND_1")
-		(lib_id "power:GND")
 		(at 182.88 124.46 0)
 		(unit 1)
 		(exclude_from_sim no)
@@ -4996,6 +4910,73 @@
 			(project ""
 				(path "/baa0c64e-005f-4609-8fc2-3159870af962/9688e5e2-596f-4b3e-8875-d3add90a032c"
 					(reference "C13")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_name "GND_1")
+		(lib_id "power:GND")
+		(at 139.7 161.29 0)
+		(unit 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(dnp no)
+		(fields_autoplaced yes)
+		(uuid "cc42450c-287c-463c-94b9-325f2cc93687")
+		(property "Reference" "#PWR021"
+			(at 139.7 167.64 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Value" "GND"
+			(at 139.7 166.37 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Footprint" ""
+			(at 139.7 161.29 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Datasheet" ""
+			(at 139.7 161.29 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Description" "Power symbol creates a global label with name \"GND\" , ground"
+			(at 139.7 161.29 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(pin "1"
+			(uuid "7cc20e93-6cf4-4023-ade1-d9ee0ba78961")
+		)
+		(instances
+			(project "get-a-grip-on-reality"
+				(path "/baa0c64e-005f-4609-8fc2-3159870af962/9688e5e2-596f-4b3e-8875-d3add90a032c"
+					(reference "#PWR021")
 					(unit 1)
 				)
 			)
