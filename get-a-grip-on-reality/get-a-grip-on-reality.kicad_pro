@@ -407,16 +407,12 @@
       "MCU"
     ],
     [
-      "97bd394b-2f9a-41c1-a3db-ce9902ed1590",
-      "Drivers"
-    ],
-    [
       "9a9bf700-d10a-497d-8bed-32e73fee329a",
-      "Inputs"
+      "IMU"
     ],
     [
-      "215e2fab-514d-476e-baee-c41c25f43c37",
-      "Motors"
+      "3f5fcdac-1eb9-40f8-ae13-e6e09b3022be",
+      "Light Sensor"
     ],
     [
       "9688e5e2-596f-4b3e-8875-d3add90a032c",
