@@ -1826,24 +1826,6 @@
 					)
 				)
 				(pin bidirectional line
-					(at 45.72 30.48 180)
-					(length 2.54)
-					(name "GPIO14/TOUCH14/ADC2_CH3/FSPIWP/FSPIDQS/SUBSPIWP"
-						(effects
-							(font
-								(size 1.27 1.27)
-							)
-						)
-					)
-					(number "22"
-						(effects
-							(font
-								(size 1.27 1.27)
-							)
-						)
-					)
-				)
-				(pin bidirectional line
 					(at 45.72 -34.29 180)
 					(length 2.54)
 					(name "GPIO21"
@@ -2165,9 +2147,9 @@
 					)
 				)
 				(pin bidirectional line
-					(at -45.72 -27.94 0)
+					(at 45.72 30.48 180)
 					(length 2.54)
-					(name "GPIO46_HALL4B"
+					(name "GPIO46"
 						(effects
 							(font
 								(size 1.27 1.27)
@@ -2265,6 +2247,24 @@
 						)
 					)
 					(number "21"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+				(pin bidirectional line
+					(at 45.72 -31.75 180)
+					(length 2.54)
+					(name "GPIO14_LIGHT_IN"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "22"
 						(effects
 							(font
 								(size 1.27 1.27)
@@ -5282,6 +5282,16 @@
 	)
 	(wire
 		(pts
+			(xy 175.26 128.27) (xy 180.34 128.27)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "b8167a53-f2df-4878-a4ea-3b4df44e4fa0")
+	)
+	(wire
+		(pts
 			(xy 68.58 170.18) (xy 68.58 168.91)
 		)
 		(stroke
@@ -5882,6 +5892,18 @@
 		)
 		(uuid "94bbf12c-57b6-4d1a-b4f2-195729c89c64")
 	)
+	(hierarchical_label "LIGHT_IN"
+		(shape input)
+		(at 180.34 128.27 0)
+		(fields_autoplaced yes)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify left)
+		)
+		(uuid "9bd9a173-635a-4b41-8b5e-947c79181f8f")
+	)
 	(hierarchical_label "HALL2B"
 		(shape input)
 		(at 77.47 87.63 180)
@@ -6235,16 +6257,16 @@
 	)
 	(symbol
 		(lib_id "Connector:Conn_01x05_Pin")
-		(at 189.23 63.5 180)
+		(at 189.23 63.5 0)
+		(mirror y)
 		(unit 1)
 		(exclude_from_sim no)
 		(in_bom yes)
 		(on_board yes)
 		(dnp no)
-		(fields_autoplaced yes)
 		(uuid "10addce5-c829-413c-a2f1-d5958dac337a")
 		(property "Reference" "J13"
-			(at 190.5 62.2299 0)
+			(at 190.5 64.7701 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -6253,7 +6275,7 @@
 			)
 		)
 		(property "Value" "Conn_01x05_Pin"
-			(at 190.5 64.7699 0)
+			(at 190.5 62.2301 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -6261,7 +6283,7 @@
 				(justify right)
 			)
 		)
-		(property "Footprint" ""
+		(property "Footprint" "Connector_PinHeader_2.54mm:PinHeader_1x05_P2.54mm_Vertical"
 			(at 189.23 63.5 0)
 			(effects
 				(font
@@ -7573,6 +7595,71 @@
 		)
 	)
 	(symbol
+		(lib_id "power:+5V")
+		(at 279.4 80.01 0)
+		(unit 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(dnp no)
+		(uuid "81ccf2e9-9c31-4a58-9a75-225c7efce043")
+		(property "Reference" "#PWR043"
+			(at 279.4 83.82 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Value" "+5V"
+			(at 279.4 74.93 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Footprint" ""
+			(at 279.4 80.01 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Datasheet" ""
+			(at 279.4 80.01 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Description" "Power symbol creates a global label with name \"+5V\""
+			(at 279.4 80.01 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(pin "1"
+			(uuid "7e2b329f-6747-4bcd-a105-45369281211d")
+		)
+		(instances
+			(project "get-a-grip-on-reality"
+				(path "/baa0c64e-005f-4609-8fc2-3159870af962/ac4bf6b8-92c6-4d58-8d59-9dba1bb4caf0"
+					(reference "#PWR043")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
 		(lib_id "power:GND")
 		(at 186.69 152.4 0)
 		(unit 1)
@@ -8689,72 +8776,6 @@
 			(project "get-a-grip-on-reality"
 				(path "/baa0c64e-005f-4609-8fc2-3159870af962/ac4bf6b8-92c6-4d58-8d59-9dba1bb4caf0"
 					(reference "#PWR033")
-					(unit 1)
-				)
-			)
-		)
-	)
-	(symbol
-		(lib_id "power:+5V")
-		(at 279.4 80.01 0)
-		(unit 1)
-		(exclude_from_sim no)
-		(in_bom yes)
-		(on_board yes)
-		(dnp no)
-		(fields_autoplaced yes)
-		(uuid "ec2ced34-f87a-467c-8695-5bb63357aca3")
-		(property "Reference" "#PWR043"
-			(at 279.4 83.82 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(hide yes)
-			)
-		)
-		(property "Value" "VBUS"
-			(at 279.4 74.93 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Footprint" ""
-			(at 279.4 80.01 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(hide yes)
-			)
-		)
-		(property "Datasheet" ""
-			(at 279.4 80.01 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(hide yes)
-			)
-		)
-		(property "Description" "Power symbol creates a global label with name \"+5V\""
-			(at 279.4 80.01 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(hide yes)
-			)
-		)
-		(pin "1"
-			(uuid "03b36cdb-8b5e-4d2c-9c29-9ec7055386d6")
-		)
-		(instances
-			(project ""
-				(path "/baa0c64e-005f-4609-8fc2-3159870af962/ac4bf6b8-92c6-4d58-8d59-9dba1bb4caf0"
-					(reference "#PWR043")
 					(unit 1)
 				)
 			)

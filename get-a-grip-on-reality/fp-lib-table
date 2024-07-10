@@ -1,0 +1,4 @@
+(fp_lib_table
+  (version 7)
+  (lib (name "BPV22NF")(type "KiCad")(uri "${KIPRJMOD}/libraries/BPV22NF/BPV22NF.pretty")(options "")(descr ""))
+)

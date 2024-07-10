@@ -1990,6 +1990,16 @@
 	)
 	(wire
 		(pts
+			(xy 156.21 113.03) (xy 179.07 113.03)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "cedc0fac-f928-4c11-81f4-9cf35bc45852")
+	)
+	(wire
+		(pts
 			(xy 173.99 26.67) (xy 171.45 26.67)
 		)
 		(stroke
@@ -2127,6 +2137,18 @@
 			(type default)
 		)
 		(uuid "ffca193d-2919-4833-aa07-09e8e3485d83")
+	)
+	(text "Get a Grip on Reality"
+		(exclude_from_sim no)
+		(at 220.218 174.244 0)
+		(effects
+			(font
+				(size 5.08 5.08)
+				(thickness 0.7112)
+				(bold yes)
+			)
+		)
+		(uuid "71e3d578-5020-414d-8895-fc08b0bdf918")
 	)
 	(label "MOTOR5"
 		(at 160.02 78.74 0)
@@ -4650,6 +4672,16 @@
 				(justify left top)
 			)
 		)
+		(pin "LIGHT_OUT" output
+			(at 179.07 113.03 180)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+			(uuid "79438f4f-24ee-4f4e-a535-f05a49213e16")
+		)
 		(instances
 			(project "get-a-grip-on-reality"
 				(path "/baa0c64e-005f-4609-8fc2-3159870af962"
@@ -5083,6 +5115,16 @@
 				(justify left)
 			)
 			(uuid "394bee73-5d7d-4b79-9aba-bd63389ccff8")
+		)
+		(pin "LIGHT_IN" input
+			(at 156.21 113.03 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify right)
+			)
+			(uuid "4433898c-88e7-4a9b-a9f8-d5e5169ea212")
 		)
 		(instances
 			(project "get-a-grip-on-reality"
