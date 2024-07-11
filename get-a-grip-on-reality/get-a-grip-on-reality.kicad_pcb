@@ -387,7 +387,7 @@
 		(descr "Resistor SMD 0805 (2012 Metric), square (rectangular) end terminal, IPC_7351 nominal, (Body size source: IPC-SM-782 page 72, https://www.pcb-3d.com/wordpress/wp-content/uploads/ipc-sm-782a_amendment_1_and_2.pdf), generated with kicad-footprint-generator")
 		(tags "resistor")
 		(property "Reference" "R6"
-			(at -2.6875 -3.8 360)
+			(at -2.6875 -3.8 0)
 			(layer "F.SilkS")
 			(uuid "ba19313b-94ea-4dac-873a-76927f5d7b2c")
 			(effects
@@ -398,7 +398,7 @@
 			)
 		)
 		(property "Value" "100k"
-			(at 0 1.65 360)
+			(at 0 1.65 0)
 			(layer "F.Fab")
 			(uuid "9d247e30-7858-4351-8084-b1d75b81aa0f")
 			(effects
@@ -553,7 +553,7 @@
 			(uuid "817d6d6a-9e74-4cd2-b31b-93ab6f9d395d")
 		)
 		(fp_text user "${REFERENCE}"
-			(at 0 0 360)
+			(at 0 0 0)
 			(layer "F.Fab")
 			(uuid "2fbc3a0b-718c-4ebb-a458-58a24a8396bb")
 			(effects
@@ -3912,7 +3912,7 @@
 			)
 		)
 		(property "Value" "10n"
-			(at 0 1.68 360)
+			(at 0 1.68 0)
 			(layer "F.Fab")
 			(uuid "ecb2dee1-91d8-481e-9533-58c6f8588ff7")
 			(effects
@@ -4067,7 +4067,7 @@
 			(uuid "5fdb81bd-05d7-430d-acc9-bbac985d55fa")
 		)
 		(fp_text user "${REFERENCE}"
-			(at 0 0 360)
+			(at 0 0 0)
 			(layer "F.Fab")
 			(uuid "d30b9f28-c081-4ab8-aa2f-104c614287ba")
 			(effects
@@ -15178,7 +15178,7 @@
 		(descr "Through hole straight pin header, 1x05, 2.54mm pitch, single row")
 		(tags "Through hole pin header THT 1x05 2.54mm single row")
 		(property "Reference" "J13"
-			(at -3.1 -1.025 360)
+			(at -3.1 -1.025 0)
 			(layer "F.SilkS")
 			(hide yes)
 			(uuid "4393a6fd-ee27-425c-9783-3cf1f60ff14e")
@@ -15190,7 +15190,7 @@
 			)
 		)
 		(property "Value" "Conn_01x05_Pin"
-			(at 0 12.49 360)
+			(at 0 12.49 0)
 			(layer "F.Fab")
 			(uuid "b3201bdc-1a25-4fe8-a78a-ce6bfbffcaf2")
 			(effects
@@ -17901,7 +17901,7 @@
 		(uuid "c8a6acaf-d68e-4bae-812b-9faa91e4ee99")
 		(at 73.325 48.975 180)
 		(property "Reference" "U5"
-			(at -0.15 -0.125 360)
+			(at -0.15 -0.125 0)
 			(layer "F.SilkS")
 			(uuid "77489323-045c-4e19-a9ab-848035d049b3")
 			(effects
@@ -17912,7 +17912,7 @@
 			)
 		)
 		(property "Value" "TLV2462CDR"
-			(at 7.87 3.537 360)
+			(at 7.87 3.537 0)
 			(layer "F.Fab")
 			(uuid "279a574e-a521-4b2c-8919-c9dd6bc22dfb")
 			(effects
@@ -17923,7 +17923,7 @@
 			)
 		)
 		(property "Footprint" "fydp:SOIC127P599X175-8N"
-			(at 0 0 360)
+			(at 0 0 0)
 			(layer "F.Fab")
 			(hide yes)
 			(uuid "5bac6667-c2f5-4920-8008-66d7dd9c874c")
@@ -17935,7 +17935,7 @@
 			)
 		)
 		(property "Datasheet" ""
-			(at 0 0 360)
+			(at 0 0 0)
 			(layer "F.Fab")
 			(hide yes)
 			(uuid "ea69e429-8422-407b-96d7-ff00e03b799e")
@@ -17947,7 +17947,7 @@
 			)
 		)
 		(property "Description" ""
-			(at 0 0 360)
+			(at 0 0 0)
 			(layer "F.Fab")
 			(hide yes)
 			(uuid "29fedbd2-01d3-4dd0-bc77-42614482c4ee")
@@ -18180,7 +18180,7 @@
 		(descr "Resistor SMD 0805 (2012 Metric), square (rectangular) end terminal, IPC_7351 nominal, (Body size source: IPC-SM-782 page 72, https://www.pcb-3d.com/wordpress/wp-content/uploads/ipc-sm-782a_amendment_1_and_2.pdf), generated with kicad-footprint-generator")
 		(tags "resistor")
 		(property "Reference" "R7"
-			(at -2.8 0 360)
+			(at -2.8 0 0)
 			(layer "F.SilkS")
 			(uuid "b70a1c3f-cb67-4151-b772-96cc151d28cc")
 			(effects
@@ -18191,7 +18191,7 @@
 			)
 		)
 		(property "Value" "47k"
-			(at 0 1.65 360)
+			(at 0 1.65 0)
 			(layer "F.Fab")
 			(uuid "783372af-74c9-4606-a824-c2d1e27877e6")
 			(effects
@@ -18346,7 +18346,7 @@
 			(uuid "72399b41-b71b-4f8c-b068-0d37dd068568")
 		)
 		(fp_text user "${REFERENCE}"
-			(at 0 0 360)
+			(at 0 0 0)
 			(layer "F.Fab")
 			(uuid "c6b82754-4b40-4631-90e7-fdaa72f8f8c6")
 			(effects
@@ -21971,7 +21971,7 @@
 		(descr "Capacitor SMD 0805 (2012 Metric), square (rectangular) end terminal, IPC_7351 nominal, (Body size source: IPC-SM-782 page 76, https://www.pcb-3d.com/wordpress/wp-content/uploads/ipc-sm-782a_amendment_1_and_2.pdf, https://docs.google.com/spreadsheets/d/1BsfQQcO9C6DZCsRaXUlFlo91Tg2WpOkGARC1WS5S8t0/edit?usp=sharing), generated with kicad-footprint-generator")
 		(tags "capacitor")
 		(property "Reference" "C12"
-			(at -2.95 -3 360)
+			(at -2.95 -3 0)
 			(layer "F.SilkS")
 			(uuid "c4d499ea-9369-4236-a8c9-2a883cb258c4")
 			(effects
@@ -21982,7 +21982,7 @@
 			)
 		)
 		(property "Value" "5p"
-			(at 0 1.68 360)
+			(at 0 1.68 0)
 			(layer "F.Fab")
 			(uuid "058152fe-3d86-4be8-86f3-4fecbf78b3c5")
 			(effects
@@ -22137,7 +22137,7 @@
 			(uuid "34ed2e4c-91ce-4d5f-9000-a891adbc595b")
 		)
 		(fp_text user "${REFERENCE}"
-			(at 0 0 360)
+			(at 0 0 0)
 			(layer "F.Fab")
 			(uuid "950b565e-771b-4ead-be4a-cd1399b4950c")
 			(effects
@@ -23490,7 +23490,7 @@
 		(descr "Connector XT30 Horizontal PCB Male, https://www.tme.eu/en/Document/ce4077e36b79046da520ca73227e15de/XT30PW%20SPEC.pdf")
 		(tags "RC Connector XT30")
 		(property "Reference" "J12"
-			(at -8.25 1.375 360)
+			(at -8.25 1.375 0)
 			(layer "F.SilkS")
 			(uuid "1379fa95-d72f-433e-bc63-b32266e34899")
 			(effects
@@ -23501,7 +23501,7 @@
 			)
 		)
 		(property "Value" "Battery Connector MCU"
-			(at 3.775 3.0578 360)
+			(at 3.775 3.0578 0)
 			(layer "F.Fab")
 			(uuid "a96e9b04-e711-4c41-9e52-4cb3500f3c9c")
 			(effects
@@ -23839,19 +23839,8 @@
 			(layer "F.Fab")
 			(uuid "5e91b107-a462-4fdf-a9e1-4ea1d5281efa")
 		)
-		(fp_text user "-"
-			(at 4.2526 0.0688 360)
-			(layer "F.SilkS")
-			(uuid "73015a82-6589-4857-b3a4-e9e254a79b19")
-			(effects
-				(font
-					(size 1.5 1.5)
-					(thickness 0.15)
-				)
-			)
-		)
 		(fp_text user "+"
-			(at -6.7474 0.0688 360)
+			(at -6.7474 0.0688 0)
 			(layer "F.SilkS")
 			(uuid "76bd64ed-06a8-4970-aa8e-b98ef2f0c441")
 			(effects
@@ -23862,7 +23851,7 @@
 			)
 		)
 		(fp_text user "${REFERENCE}"
-			(at -2.5 -3 360)
+			(at -2.5 -3 0)
 			(layer "F.Fab")
 			(uuid "0ed150f1-1ec0-4c65-ad28-5e1338d8853a")
 			(effects
@@ -24548,7 +24537,7 @@
 			(uuid "955310ce-6b2b-41b4-8298-4e7928d9bd04")
 		)
 		(fp_text user "${REFERENCE}"
-			(at 0 0 360)
+			(at 0 0 0)
 			(layer "B.Fab")
 			(uuid "5c46c5f8-d6f8-4488-b6d3-d32e63a2e67f")
 			(effects
@@ -25442,6 +25431,179 @@
 				(size 0.75 0.75)
 				(thickness 0.14)
 				(bold yes)
+			)
+			(justify left bottom)
+		)
+	)
+	(gr_text "Missing connection ->"
+		(at 28.194 37.846 0)
+		(layer "Cmts.User")
+		(uuid "15f4f708-e9af-422a-a7a2-bbc58349a672")
+		(effects
+			(font
+				(size 1 1)
+				(thickness 0.15)
+			)
+			(justify left bottom)
+		)
+	)
+	(gr_text "Cap here ->"
+		(at 30.226 47.117 0)
+		(layer "Cmts.User")
+		(uuid "1cee5fbd-8a0a-46de-8d3b-2102262962ee")
+		(effects
+			(font
+				(size 1.5 1.5)
+				(thickness 0.3)
+				(bold yes)
+			)
+			(justify left bottom)
+		)
+	)
+	(gr_text "<- GND not connected"
+		(at 66.802 66.548 0)
+		(layer "Cmts.User")
+		(uuid "20d2fbd4-3d65-4b6d-88ac-7f633abb23f4")
+		(effects
+			(font
+				(size 1 1)
+				(thickness 0.15)
+			)
+			(justify left bottom)
+		)
+	)
+	(gr_text "<- GND not connected"
+		(at 67.056 46.482 0)
+		(layer "Cmts.User")
+		(uuid "23986180-85e7-4802-947e-c71cbbdfd945")
+		(effects
+			(font
+				(size 1 1)
+				(thickness 0.15)
+			)
+			(justify left bottom)
+		)
+	)
+	(gr_text "Really thin GND path ->"
+		(at 27.178 49.784 0)
+		(layer "Cmts.User")
+		(uuid "41b512bd-8037-466c-8fc6-edfcf9364509")
+		(effects
+			(font
+				(size 1 1)
+				(thickness 0.15)
+			)
+			(justify left bottom)
+		)
+	)
+	(gr_text "<- Try not to put vias on pads"
+		(at 74.422 61.595 0)
+		(layer "Cmts.User")
+		(uuid "42b70427-ba11-4151-bb8c-bfb58a651ebc")
+		(effects
+			(font
+				(size 1 1)
+				(thickness 0.15)
+			)
+			(justify left bottom)
+		)
+	)
+	(gr_text "<- GND not connected"
+		(at 76.835 54.991 0)
+		(layer "Cmts.User")
+		(uuid "45254138-cf04-45a0-87aa-39e744da9faf")
+		(effects
+			(font
+				(size 1 1)
+				(thickness 0.15)
+			)
+			(justify left bottom)
+		)
+	)
+	(gr_text "<- add vias here"
+		(at 72.898 50.546 0)
+		(layer "Cmts.User")
+		(uuid "47cc98a5-c4e7-42ac-a61f-7f5c1efc2f2d")
+		(effects
+			(font
+				(size 1 1)
+				(thickness 0.15)
+			)
+			(justify left bottom)
+		)
+	)
+	(gr_text "^ Right Angle grrr"
+		(at 51.054 48.26 0)
+		(layer "Cmts.User")
+		(uuid "6708852b-e2bc-4843-9821-dd6af33d9eba")
+		(effects
+			(font
+				(size 1.5 1.5)
+				(thickness 0.3)
+				(bold yes)
+			)
+			(justify left bottom)
+		)
+	)
+	(gr_text "<- Fix long 3.3v line with thin width"
+		(at 58.42 43.307 0)
+		(layer "Cmts.User")
+		(uuid "755a73c8-fa94-4590-895a-b8b9133077f3")
+		(effects
+			(font
+				(size 1 1)
+				(thickness 0.15)
+			)
+			(justify left bottom)
+		)
+	)
+	(gr_text "Cap here ->"
+		(at 37.592 44.323 0)
+		(layer "Cmts.User")
+		(uuid "aa738456-7668-4920-a93c-4ef65179adb5")
+		(effects
+			(font
+				(size 1.5 1.5)
+				(thickness 0.3)
+				(bold yes)
+			)
+			(justify left bottom)
+		)
+	)
+	(gr_text "Rotate cap to reduce return loop V"
+		(at 17.78 42.291 0)
+		(layer "Cmts.User")
+		(uuid "b64ef588-d318-4d0e-afd3-ec495f5469e2")
+		(effects
+			(font
+				(size 1.5 1.5)
+				(thickness 0.3)
+				(bold yes)
+			)
+			(justify left bottom)
+		)
+	)
+	(gr_text "Move caps ["
+		(at 31.369 71.501 0)
+		(layer "Cmts.User")
+		(uuid "ec32c3b0-090e-43e2-900e-0ef5ce5d08fb")
+		(effects
+			(font
+				(size 1.5 1.5)
+				(thickness 0.3)
+				(bold yes)
+			)
+			(justify left bottom)
+		)
+	)
+	(gr_text "<- More vias here to reduce GND return path impedence"
+		(at 72.39 69.088 0)
+		(layer "Cmts.User")
+		(uuid "ff745dca-5a94-433d-96cb-f2c37956dc3e")
+		(effects
+			(font
+				(size 1 1)
+				(thickness 0.15)
 			)
 			(justify left bottom)
 		)
@@ -27434,6 +27596,14 @@
 		(uuid "2d8bfc59-d64b-47e4-9847-f4d9272520bc")
 	)
 	(segment
+		(start 46.9 44.6924)
+		(end 47.1016 44.4908)
+		(width 0.25)
+		(layer "F.Cu")
+		(net 5)
+		(uuid "2e8072ad-f29e-4017-84fc-7ae52d064765")
+	)
+	(segment
 		(start 47.649 64.836)
 		(end 47.649 65.416)
 		(width 0.25)
@@ -27698,14 +27868,6 @@
 		(uuid "b6d8cc84-9f15-4f18-8d6d-351567232670")
 	)
 	(segment
-		(start 47.1016 44.4908)
-		(end 45.604 45.9884)
-		(width 0.25)
-		(layer "F.Cu")
-		(net 5)
-		(uuid "bc6d936e-f15c-4761-b226-3c7c707f2070")
-	)
-	(segment
 		(start 45.604 48.991)
 		(end 45.604 46.271)
 		(width 0.25)
@@ -27728,6 +27890,14 @@
 		(layer "F.Cu")
 		(net 5)
 		(uuid "cf6f84fc-5079-4e39-b9e8-e9ffe721a5e9")
+	)
+	(segment
+		(start 46.9 44.975)
+		(end 46.9 44.6924)
+		(width 0.25)
+		(layer "F.Cu")
+		(net 5)
+		(uuid "e6930633-4acb-4a24-b27e-7dc27fae21c8")
 	)
 	(segment
 		(start 55.1942 43.3324)
@@ -28884,44 +29054,12 @@
 		(uuid "efb6cb9a-70b6-4dbc-be60-45cfd67c9603")
 	)
 	(segment
-		(start 62.438999 66.486001)
+		(start 61.675 65.868)
 		(end 61.675 67.25)
-		(width 0.2)
+		(width 0.15)
 		(layer "F.Cu")
 		(net 38)
-		(uuid "64586e11-ad10-4979-94af-4d3a0620bdd0")
-	)
-	(segment
-		(start 62.139 66.466)
-		(end 62.438999 66.466)
-		(width 0.2)
-		(layer "F.Cu")
-		(net 38)
-		(uuid "800c50e6-2a25-4c71-8b0f-3a626dd09168")
-	)
-	(segment
-		(start 62.438999 66.466)
-		(end 62.438999 66.486001)
-		(width 0.2)
-		(layer "F.Cu")
-		(net 38)
-		(uuid "94953f22-0f80-4235-81a1-07c583e99846")
-	)
-	(segment
-		(start 61.619 65.416)
-		(end 62.139 65.936)
-		(width 0.2)
-		(layer "F.Cu")
-		(net 38)
-		(uuid "a25c9fdd-69a4-454d-b71f-0cbb6597418d")
-	)
-	(segment
-		(start 62.139 65.936)
-		(end 62.139 66.466)
-		(width 0.2)
-		(layer "F.Cu")
-		(net 38)
-		(uuid "e7c162ec-1464-4c63-80f5-8f90077060e7")
+		(uuid "3ca6ceee-9ec1-40ec-aedd-b6e1862c92f4")
 	)
 	(via
 		(at 61.675 67.25)
@@ -28996,28 +29134,20 @@
 		(uuid "fc0f8a3b-735d-4f20-8da2-53b41b0fa3b7")
 	)
 	(segment
-		(start 62.889 65.416)
-		(end 62.889 66.672397)
-		(width 0.2)
+		(start 62.738 65.567)
+		(end 62.738 67.237)
+		(width 0.15)
 		(layer "F.Cu")
 		(net 43)
-		(uuid "06883cce-0079-40fc-9a31-88ed2ed40a0b")
+		(uuid "0c791929-b515-4d9f-b820-d082b2c8c5d9")
 	)
 	(segment
-		(start 62.725 66.836397)
+		(start 62.738 67.237)
 		(end 62.725 67.25)
-		(width 0.2)
+		(width 0.15)
 		(layer "F.Cu")
 		(net 43)
-		(uuid "7e0bcaba-823c-4ff1-9960-d69f04f73b5a")
-	)
-	(segment
-		(start 62.889 66.672397)
-		(end 62.725 66.836397)
-		(width 0.2)
-		(layer "F.Cu")
-		(net 43)
-		(uuid "d3a828b1-599d-4d33-822e-79a69fe89e5b")
+		(uuid "149e704a-a995-46fc-9592-5a53a1c914fe")
 	)
 	(via
 		(at 62.725 67.25)
