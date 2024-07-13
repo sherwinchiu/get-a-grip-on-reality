@@ -1,0 +1,52 @@
+### Footprint positions - created on 2024-07-13T14:22:48-0400 ###
+### Printed by KiCad version 8.0.3
+## Unit = mm, Angle = deg.
+## Side : top
+# Ref     Val                    Package                                              PosX       PosY       Rot  Side
+BOOT1     SW_Push                SW_SPST_EVPBF                                     70.6818   -36.9164   90.0000  top
+BT1       1048P                  BAT_1048P                                        109.3700   -85.9562  -90.0000  top
+C1        1u                     C_0805_2012Metric                                 69.1000   -63.8250  180.0000  top
+C2        0.1u                   C_0805_2012Metric                                 75.3750   -42.5250    0.0000  top
+C3        0.1u                   C_0805_2012Metric                                 68.5678   -42.5250    0.0000  top
+C4        1u                     C_0805_2012Metric                                 68.7974   -58.0750  180.0000  top
+C5        1u                     C_0805_2012Metric                                 68.7974   -55.9922  180.0000  top
+C6        10u                    C_0805_2012Metric                                 42.9252   -68.0668  180.0000  top
+C8        1u                     C_0805_2012Metric                                 46.5750   -34.3250  180.0000  top
+C9        10n                    C_0805_2012Metric                                 72.1350   -58.3702   90.0000  top
+C10       0.1u                   C_0805_2012Metric                                 72.1300   -61.9110  -90.0000  top
+C11       2.2u                   C_0805_2012Metric                                 51.4250   -42.3250  180.0000  top
+C12       5p                     C_0805_2012Metric                                 77.9500   -55.8500  180.0000  top
+C13       10n                    C_0805_2012Metric                                 69.0750   -53.1250  180.0000  top
+D1        ESD9B3.3ST5G           D_SOD-923                                         71.4250   -55.8912  180.0000  top
+D2        LED                    LED_0805_2012Metric                               62.4750   -52.6875  -90.0000  top
+D3        LED                    LED_0805_2012Metric                               74.1750   -58.3875  -90.0000  top
+D4        BPV22NF                XDCR_BPV22NF                                      76.7750   -49.3625   90.0000  top
+D5        BPV22NF                XDCR_BPV22NF                                      82.5001   -52.6750  -150.0000  top
+D6        BPV22NF                XDCR_BPV22NF                                      82.5001   -46.0400  -30.0000  top
+D8        ESD9B5.0ST5G           D_SOD-923                                         74.4108   -64.3250  180.0000  top
+J1        Conn_01x04_Pin         PinHeader_1x04_P2.54mm_Vertical                   46.6750   -44.8450  180.0000  top
+J2        HALL1                  JST_SH_BM05B-SRSS-TB_1x05-1MP_P1.00mm_Vertical    45.5750   -75.9550  180.0000  top
+J3        HALL2                  JST_SH_BM05B-SRSS-TB_1x05-1MP_P1.00mm_Vertical    54.4750   -75.9500  180.0000  top
+J4        HALL3                  JST_SH_BM05B-SRSS-TB_1x05-1MP_P1.00mm_Vertical    63.3750   -75.9500  180.0000  top
+J5        HALL4                  JST_SH_BM05B-SRSS-TB_1x05-1MP_P1.00mm_Vertical    64.4224   -68.7812  -90.0000  top
+J6        HALL5                  JST_SH_BM05B-SRSS-TB_1x05-1MP_P1.00mm_Vertical    64.4250   -59.7750  -90.0000  top
+J7        MOTOR1                 PinHeader_1x03_P2.54mm_Vertical                   50.2923   -39.4460  180.0000  top
+J8        MOTOR2                 PinHeader_1x03_P2.54mm_Vertical                   54.0260   -39.4460  180.0000  top
+J9        MOTOR3                 PinHeader_1x03_P2.54mm_Vertical                   57.7597   -39.4460  180.0000  top
+J10       MOTOR4                 PinHeader_1x03_P2.54mm_Vertical                   61.4933   -39.4460  180.0000  top
+J11       MOTOR5                 PinHeader_1x03_P2.54mm_Vertical                   65.2270   -39.4460  180.0000  top
+J13       Conn_01x05_Pin         PinHeader_1x05_P2.54mm_Vertical                   43.0750   -45.2950  180.0000  top
+J15       Battery_Connector_Bat  AMASS_XT30PW-F_1x02_P2.50mm_Horizontal            97.7006   -39.9882    0.0000  top
+R1        10k                    R_0805_2012Metric                                 71.9714   -42.5250    0.0000  top
+R2        500                    R_0805_2012Metric                                 62.4750   -49.1588   90.0000  top
+R3        5.1k                   R_0805_2012Metric                                 74.2004   -54.9054   90.0000  top
+R4        3k                     R_0805_2012Metric                                 64.5250   -45.6125  -90.0000  top
+R5        47k                    R_0805_2012Metric                                 64.5250   -49.1250   90.0000  top
+R6        100k                   R_0805_2012Metric                                 77.9500   -53.8500  180.0000  top
+R7        47k                    R_0805_2012Metric                                 68.5250   -44.7250  180.0000  top
+RESET1    SW_Push                SW_SPST_EVPBF                                     77.4250   -36.8950  -90.0000  top
+U1        TLV76733DRVx           WSON-6-1EP_2x2mm_P0.65mm_EP1x1.6mm_ThermalVias    69.2250   -61.4000  -90.0000  top
+U2        ESP32-S3-WROOM-1       ESP32-S3-WROOM-1                                  47.5640   -56.9910   90.0000  top
+U4        IIM-42652              Bosch_LGA-14_3x2.5mm_P0.5mm                       50.6192   -45.1250  180.0000  top
+U5        TLV2462CDR             SOIC127P599X175-8N                                69.2500   -49.3000  180.0000  top
+## End

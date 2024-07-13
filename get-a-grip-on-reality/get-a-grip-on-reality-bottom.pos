@@ -1,0 +1,47 @@
+### Footprint positions - created on 2024-07-13T14:22:48-0400 ###
+### Printed by KiCad version 8.0.3
+## Unit = mm, Angle = deg.
+## Side : bottom
+# Ref     Val                    Package                                      PosX       PosY       Rot  Side
+C7        1u                     C_0805_2012Metric                         42.5750   -50.1500    0.0000  bottom
+C14       1u                     C_0805_2012Metric                        127.4506   -47.2882   90.0000  bottom
+C15       4.7u                   C_0805_2012Metric                        119.6572   -63.0157  -90.0000  bottom
+C16       1u                     C_0805_2012Metric                        117.5998   -64.2349  -90.0000  bottom
+C17       100n                   C_0805_2012Metric                         96.5934   -61.3500  -90.0000  bottom
+C18       4.7u                   C_0805_2012Metric                         96.0000   -58.6250  180.0000  bottom
+C19       1u                     C_0805_2012Metric                        115.4545   -64.2349  -90.0000  bottom
+C20       100n                   C_0805_2012Metric                        110.9045   -53.7002   90.0000  bottom
+C21       10u                    C_0805_2012Metric                        122.2836   -55.2383    0.0000  bottom
+C22       2.2u                   C_0805_2012Metric                        107.8000   -52.1250   90.0000  bottom
+C23       39n                    C_0805_2012Metric                        101.8866   -64.9324  180.0000  bottom
+C24       4.7u                   C_0805_2012Metric                        121.6690   -64.6598  -90.0000  bottom
+C25       47n                    C_0805_2012Metric                        118.8444   -54.3645   90.0000  bottom
+C26       44u                    C_0805_2012Metric                        118.8444   -57.8291   90.0000  bottom
+C27       100n                   C_0805_2012Metric                         99.3000   -54.2250   90.0000  bottom
+C28       47u                    C_0805_2012Metric                        106.4586   -46.9238    0.0000  bottom
+C29       47u                    C_0805_2012Metric                        100.2295   -47.0251  180.0000  bottom
+C30       47u                    C_0805_2012Metric                        100.2447   -44.9677  180.0000  bottom
+D7        LED                    LED_0805_2012Metric                      127.4550   -50.9904   90.0000  bottom
+J12       Battery_Connector_MCU  AMASS_XT30PW-M_1x02_P2.50mm_Horizontal    77.4000   -67.0250    0.0000  bottom
+J14       Conn_01x05_Pin         PinHeader_1x05_P2.54mm_Vertical          130.5792   -57.3211  180.0000  bottom
+L1        1u                     L_Taiyo-Yuden_MD-2020                    122.6646   -52.8761  180.0000  bottom
+L2        220u                   L_Bourns_SRU5016_5.2x5.2mm               103.5630   -51.1656   90.0000  bottom
+P1        USB_C_Plug_USB2.0      USB_C_Receptacle_GCT_USB4110              58.1500   -75.7250  180.0000  bottom
+R8        2.2k                   R_0805_2012Metric                        127.4550   -54.4744  -90.0000  bottom
+R9        383                    R_0805_2012Metric                        127.6328   -64.6598  -90.0000  bottom
+R10       422k                   R_0805_2012Metric                         98.6000   -61.3375  -90.0000  bottom
+R11       100k                   R_0805_2012Metric                         98.6000   -64.8125  -90.0000  bottom
+R12       5.23k                  R_0805_2012Metric                        121.6940   -68.1228  -90.0000  bottom
+R13       30.1k                  R_0805_2012Metric                        123.6815   -68.1228  -90.0000  bottom
+R14       10k                    R_0805_2012Metric                        108.7006   -61.7047   90.0000  bottom
+R15       11k                    R_0805_2012Metric                        104.9046   -61.7790  -90.0000  bottom
+R16       5k                     R_0805_2012Metric                        104.9500   -65.3625  -90.0000  bottom
+R17       300                    R_0805_2012Metric                        125.6548   -64.6598  -90.0000  bottom
+R18       9.5                    R_0805_2012Metric                        123.6769   -64.6598  -90.0000  bottom
+R19       45.3k                  R_0805_2012Metric                        101.8847   -60.9700    0.0000  bottom
+R20       10k                    R_0805_2012Metric                        101.8866   -62.9258  180.0000  bottom
+TH1       10k                    R_0805_2012Metric                        125.6690   -68.1228  -90.0000  bottom
+U3        D3V3XA4B10LP           Diodes_UDFN-10_1.0x2.5mm_P0.5mm           58.8750   -69.5825  -90.0000  bottom
+U6        BQ25887                VQFN-24-1EP_4x4mm_P0.5mm_EP2.5x2.5mm     123.3456   -59.0158  180.0000  bottom
+U7        TPS54KB20RZRR          RZR0016A-MFG                             103.6000   -57.2850    0.0000  bottom
+## End
