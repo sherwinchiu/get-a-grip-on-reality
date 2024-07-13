@@ -8259,16 +8259,16 @@
 	)
 	(symbol
 		(lib_id "Connector:Conn_01x02_Socket")
-		(at 104.14 172.72 0)
+		(at 104.14 175.26 0)
+		(mirror x)
 		(unit 1)
 		(exclude_from_sim no)
 		(in_bom yes)
 		(on_board yes)
 		(dnp no)
-		(fields_autoplaced yes)
 		(uuid "bdefcbb9-72e2-42c8-88a4-d370aa9cb703")
 		(property "Reference" "J12"
-			(at 105.41 173.355 0)
+			(at 105.41 174.625 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -8277,7 +8277,7 @@
 			)
 		)
 		(property "Value" "Battery Connector MCU"
-			(at 105.41 175.895 0)
+			(at 105.41 172.085 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -8286,7 +8286,7 @@
 			)
 		)
 		(property "Footprint" "Connector_AMASS:AMASS_XT30PW-M_1x02_P2.50mm_Horizontal"
-			(at 104.14 172.72 0)
+			(at 104.14 175.26 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -8295,7 +8295,7 @@
 			)
 		)
 		(property "Datasheet" "~"
-			(at 104.14 172.72 0)
+			(at 104.14 175.26 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -8304,7 +8304,7 @@
 			)
 		)
 		(property "Description" ""
-			(at 104.14 172.72 0)
+			(at 104.14 175.26 0)
 			(effects
 				(font
 					(size 1.27 1.27)

@@ -9286,7 +9286,7 @@
 				)
 			)
 		)
-		(property "Footprint" "fydp library:RZR0016A-MFG"
+		(property "Footprint" "fydp:RZR0016A-MFG"
 			(at 129.54 43.18 0)
 			(effects
 				(font
