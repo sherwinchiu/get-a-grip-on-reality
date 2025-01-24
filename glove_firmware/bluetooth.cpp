@@ -22,7 +22,7 @@ void ServerCallback::onDisconnect(BLEServer *pServer) {
 }
 
 void PeripheralCallback::onWrite(BLECharacteristic *pCharacteristic) {
-    std::__cxx11::string rxValue = pCharacteristic->getValue();
+    String rxValue = pCharacteristic->getValue();
 
     if (rxValue.length() > 0) {
       Log::println("*********");
@@ -92,7 +92,7 @@ bool isBluetoothConnected(void){
   return deviceConnected;
 }
 
-void transmitMessage(char* msg, size_t len){
+void transmitMessage(const char* msg, size_t len){
   if (deviceConnected){
     pTxCharacteristic->setValue((uint8_t *)msg, len);
     pTxCharacteristic->notify();

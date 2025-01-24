@@ -7,6 +7,8 @@
 IIM42652 IMU;
 
 void initImu(void){
+  pinMode(41, OUTPUT);
+  digitalWrite(41, LOW);
   Wire.begin(40, 39);
   while (!IMU.begin(Wire, 0x68)){
     Log::println("IIM-42652 is not connected.");

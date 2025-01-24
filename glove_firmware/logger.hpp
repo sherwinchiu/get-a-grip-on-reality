@@ -6,7 +6,7 @@
 class Log{
 public:
   static void print(char c);
-  static void print(char* msg);
+  static void print(const char* msg);
   static void print(String msg);
   static void print(float num);
   static void print(int num);

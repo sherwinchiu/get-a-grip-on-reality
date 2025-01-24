@@ -7,7 +7,7 @@ void Log::print(char c){
   transmitMessage(&c, 1);
 }
 
-void Log::print(char* msg){
+void Log::print(const char* msg){
   size_t len = 0;
   while (*(msg+len)) len++;
   transmitMessage(msg, len);

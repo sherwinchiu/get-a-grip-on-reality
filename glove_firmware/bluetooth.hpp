@@ -20,5 +20,5 @@ public:
 void initBluetooth(void);
 void bluetoothTask(void);
 bool isBluetoothConnected(void);
-void transmitMessage(char* msg, size_t len);
+void transmitMessage(const char* msg, size_t len);
 #endif
