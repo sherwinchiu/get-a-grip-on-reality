@@ -8,4 +8,8 @@ void init_hall(void);
 int** read_hall(void);
 void print_hall(void);
 
+int** read_hall_calibration(bool min_or_max);
+void hall_callibration();
+int individual_hall_callibration(int hall_reading);
+
 #endif
