@@ -9,10 +9,11 @@
 bool run_callibration = true;
 
 void setup() {
-  // initBluetooth();
+  Serial.begin(115200);
+  initBluetooth();
   // initImu();
   init_hall();
-  Serial.begin(115200);
+  
 
   // while(!isBluetoothConnected());
   // Log::println("Starting");
@@ -26,9 +27,9 @@ void setup() {
 }
 
 void loop() {
-  // bluetoothTask();
+  bluetoothTask();
   // imuTask();
-  print_hall();
-  delay(100);
+  // print_hall();
+  delay(9);
 }
 

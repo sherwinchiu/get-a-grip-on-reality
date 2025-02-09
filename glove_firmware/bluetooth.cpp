@@ -38,7 +38,7 @@ void PeripheralCallback::onWrite(BLECharacteristic *pCharacteristic) {
 
 void initBluetooth(void){
   // Create the BLE Device
-  BLEDevice::init("Haptic Feedback Glove");
+  BLEDevice::init("FYDPGloveRight");
 
   // Create the BLE Server
   pServer = BLEDevice::createServer();
@@ -84,6 +84,11 @@ void bluetoothTask(void){
   if (deviceConnected && !oldDeviceConnected) {
     // do stuff here on connecting
     oldDeviceConnected = deviceConnected;
+    
+  }
+  if (deviceConnected) {
+    char dog = char(analogRead(4));
+    transmitMessage(&dog, sizeof(char));
   }
   
 }
