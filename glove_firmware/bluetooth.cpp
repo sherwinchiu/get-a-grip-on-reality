@@ -6,12 +6,16 @@
 
 #include "bluetooth.hpp"
 #include "logger.hpp"
+#include "hall.hpp"
 
 BLEServer *pServer = NULL;
-BLECharacteristic *pTxCharacteristic;
+BLECharacteristic* pCharacteristic = NULL;
+BLECharacteristic* pWriteCharacteristic = NULL;
 bool deviceConnected = false;
 bool oldDeviceConnected = false;
 uint8_t txValue = 0;
+
+// each segment has 
 
 void ServerCallback::onConnect(BLEServer *pServer) {
   deviceConnected = true;
@@ -38,18 +42,28 @@ void PeripheralCallback::onWrite(BLECharacteristic *pCharacteristic) {
 
 void initBluetooth(void){
   // Create the BLE Device
-  BLEDevice::init("Haptic Feedback Glove");
-
   // Create the BLE Server
   pServer = BLEDevice::createServer();
   pServer->setCallbacks(new ServerCallback());
+
+  // Create the BLE Service
   BLEService *pService = pServer->createService(SERVICE_UUID);
 
-  pTxCharacteristic = pService->createCharacteristic(CHARACTERISTIC_UUID_TX, BLECharacteristic::PROPERTY_NOTIFY);
-  pTxCharacteristic->addDescriptor(new BLE2902());
+  // Create the BLE Characteristic
+  pCharacteristic = pService->createCharacteristic(
+                      CHARACTERISTIC_UUID,
+                      BLECharacteristic::PROPERTY_NOTIFY  // Add notify property
+                    );
+  pWriteCharacteristic = pService->createCharacteristic(
+                      WRITE_CHARACTERISTIC_UUID,
+                      BLECharacteristic::PROPERTY_WRITE  // Add notify property
+                    );
 
-  BLECharacteristic *pRxCharacteristic = pService->createCharacteristic(CHARACTERISTIC_UUID_RX, BLECharacteristic::PROPERTY_WRITE);
-  pRxCharacteristic->setCallbacks(new PeripheralCallback());
+  // Set callback for the write characteristic
+  pWriteCharacteristic->setCallbacks(new PeripheralCallback());
+
+  // Create a BLE Descriptor
+  pCharacteristic->addDescriptor(new BLE2902());
 
   // Start the service
   pService->start();
@@ -58,10 +72,12 @@ void initBluetooth(void){
   BLEAdvertising *pAdvertising = BLEDevice::getAdvertising();
   pAdvertising->addServiceUUID(SERVICE_UUID);
   pAdvertising->setScanResponse(true);
+  //pAdvertising->setMinInterval();
   pAdvertising->setMinPreferred(0x06);  // functions that help with iPhone connections issue
   pAdvertising->setMinPreferred(0x12);
   BLEDevice::startAdvertising();
-  Log::println("Waiting a client connection to notify...");
+ 
+  Serial.println("Characteristic defined! Now you can read it in your phone!");
 }
 
 void bluetoothTask(void){
@@ -84,6 +100,18 @@ void bluetoothTask(void){
   if (deviceConnected && !oldDeviceConnected) {
     // do stuff here on connecting
     oldDeviceConnected = deviceConnected;
+    // transfmit the messsage over ble
+    // get hall values
+  } 
+  
+  if (deviceConnected) { // periodically send data
+    read_hall();
+    construct_package();
+    if (deviceConnected){
+      pCharacteristic->setValue((uint8_t*)&package_data, sizeof(InputData));
+      pCharacteristic->notify();
+    }
+//    transmitMessage();
   }
   
 }
@@ -92,9 +120,6 @@ bool isBluetoothConnected(void){
   return deviceConnected;
 }
 
-void transmitMessage(const char* msg, size_t len){
-  if (deviceConnected){
-    pTxCharacteristic->setValue((uint8_t *)msg, len);
-    pTxCharacteristic->notify();
-  }
+void transmitMessage(const uint8_t* &msg, size_t len){
+  
 }

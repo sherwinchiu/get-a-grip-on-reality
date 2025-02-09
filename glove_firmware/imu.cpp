@@ -11,9 +11,11 @@ void initImu(void){
   digitalWrite(41, LOW);
   Wire.begin(40, 39);
   while (!IMU.begin(Wire, 0x68)){
+    Serial.println("IIM-42652 is not connected.");
     Log::println("IIM-42652 is not connected.");
     delay(1000);
   }
+  Serial.println("IIM-42652 successfully connected.");
   IMU.ex_idle();
   IMU.accelerometer_enable();
   IMU.gyroscope_enable();

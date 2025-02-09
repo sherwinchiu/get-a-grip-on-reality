@@ -9,26 +9,27 @@
 bool run_callibration = true;
 
 void setup() {
-  // initBluetooth();
-  // initImu();
-  init_hall();
   Serial.begin(115200);
+  Serial.println("Starting");
+  initBluetooth();
+  //initImu();
+  init_hall();
 
   // while(!isBluetoothConnected());
   // Log::println("Starting");
   // two modes: normal mode or hall calibration mode
   if (run_callibration) {
-    // run callibration for hall sensors
-    hall_callibration();
+     // run callibration for hall sensors
+     hall_callibration();
   } else {
     // run normally
   }
 }
 
 void loop() {
-  // bluetoothTask();
-  // imuTask();
-  print_hall();
-  delay(100);
+  bluetoothTask();
+  //imuTask();
+  // print_hall();
+  delay(9);
 }
 
