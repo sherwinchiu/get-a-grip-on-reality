@@ -1,5 +1,5 @@
 #include "hall.hpp"
-
+#include "shared.h"
 #include <Arduino.h>
 #include "board.h"
 #include "logger.hpp"
@@ -34,7 +34,7 @@ int max_hall_value[NUM_HALL_ROWS][HALL_SENSORS_PER_FINGER] = { { 0, 0, 0 },
 static unsigned short hall[5][3];
 
 
-\
+
 void writeUnsignedShortToCharArrayLE(unsigned short value, unsigned char* charArray, uint8_t index) {
     // Store the most significant byte in the second element
     charArray[index + 1] = static_cast<char>((value >> 8) & 0xFF);
@@ -80,8 +80,8 @@ void hall_callibration() {
   int start_time = millis();
   while (millis() - start_time < 5000) {  // for five seconds
     // we need to read all hall sensor values at the minimum and maximum state
-    read_hall_calibration(false);
-    read_hall_calibration(true);
+    read_hall_calibration();
+    read_hall_calibration();
   }
   // store in EEPROM?
   Serial.println("Values calibrated!");

@@ -2,7 +2,7 @@
 #define BOARD_H
 
 //*** Which hand to compile for ***//
-#define LEFT_HAND
-//#define RIGHT_HAND
+//#define LEFT_HAND
+#define RIGHT_HAND
 
 #endif

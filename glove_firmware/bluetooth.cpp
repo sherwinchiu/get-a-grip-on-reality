@@ -4,9 +4,10 @@
 #include <BLEUtils.h>
 #include <BLE2902.h>
 
+#include "hall.hpp"
 #include "bluetooth.hpp"
 #include "logger.hpp"
-#include "hall.hpp"
+#include "shared.h"
 
 BLEServer *pServer = NULL;
 BLECharacteristic* pCharacteristic = NULL;
@@ -14,6 +15,9 @@ BLECharacteristic* pWriteCharacteristic = NULL;
 bool deviceConnected = false;
 bool oldDeviceConnected = false;
 uint8_t txValue = 0;
+
+InputData package_data;
+
 
 // each segment has 
 
@@ -120,6 +124,10 @@ bool isBluetoothConnected(void){
   return deviceConnected;
 }
 
-void transmitMessage(const uint8_t* &msg, size_t len){
+void transmitMessage(const char* msg, size_t len){
+  if (deviceConnected){
+      pCharacteristic->setValue((uint8_t*)msg, sizeof(InputData));
+      pCharacteristic->notify();
+    }
   
 }
