@@ -104,8 +104,6 @@ void bluetoothTask(void){
   if (deviceConnected && !oldDeviceConnected) {
     // do stuff here on connecting
     oldDeviceConnected = deviceConnected;
-    // transfmit the messsage over ble
-    // get hall values
   } 
   
   if (deviceConnected) { // periodically send data
@@ -115,7 +113,6 @@ void bluetoothTask(void){
       pCharacteristic->setValue((uint8_t*)&package_data, sizeof(InputData));
       pCharacteristic->notify();
     }
-//    transmitMessage();
   }
   
 }

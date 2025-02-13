@@ -110,7 +110,6 @@ void print_hall(void) {
     }
     Serial.println();
   }
-  // Serial.println();
 }
 
 void construct_package() {
@@ -128,5 +127,4 @@ void construct_package() {
   package_data.button = 0;
   package_data.joystick[0] = 0;
   package_data.joystick[1] = 0;
-  //package_data.splay = {0x90,0x01,0x90,0x01,0x90,0x01,0x90,0x01};
 }
