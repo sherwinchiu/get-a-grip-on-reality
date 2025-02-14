@@ -7,9 +7,9 @@
 // #define CHARACTERISTIC_UUID_TX "6e400003-b5a3-f393-e0a9-e50e24dcca9e"
 
 #define SERVICE_UUID        "7241bbc8-8ed8-4729-85ea-0ffc63248b4f"
-#define CHARACTERISTIC_UUID "34797cc3-9e74-42e1-a669-be3cbdbae64d"
+#define CHARACTERISTIC_UUID_TX "34797cc3-9e74-42e1-a669-be3cbdbae64d"
 #define CHARACTERISTIC_UUID2 "3a8b9eb6-d16c-4075-9178-a5c0380a5815"
-#define WRITE_CHARACTERISTIC_UUID "36ade52d-4a4c-4b23-9d64-78e6a3e2cdd4"
+#define CHARACTERISTIC_UUID_RX "36ade52d-4a4c-4b23-9d64-78e6a3e2cdd4"
 
 class ServerCallback : public BLEServerCallbacks {
 public:

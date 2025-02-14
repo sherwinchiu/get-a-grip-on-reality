@@ -45,29 +45,54 @@ void PeripheralCallback::onWrite(BLECharacteristic *pCharacteristic) {
   }
 
 void initBluetooth(void){
-  // Create the BLE Device
+  // // Create the BLE Device
+  // // Create the BLE Server
+  // pServer = BLEDevice::createServer();
+  // pServer->setCallbacks(new ServerCallback());
+
+  // // Create the BLE Service
+  // BLEService *pService = pServer->createService(SERVICE_UUID);
+
+  // // Create the BLE Characteristic
+  // pCharacteristic = pService->createCharacteristic(
+  //                     CHARACTERISTIC_UUID,
+  //                     BLECharacteristic::PROPERTY_NOTIFY  // Add notify property
+  //                   );
+  // pWriteCharacteristic = pService->createCharacteristic(
+  //                     WRITE_CHARACTERISTIC_UUID,
+  //                     BLECharacteristic::PROPERTY_WRITE  // Add notify property
+  //                   );
+
+  // // Set callback for the write characteristic
+  // pWriteCharacteristic->setCallbacks(new PeripheralCallback());
+
+  // // Create a BLE Descriptor
+  // pCharacteristic->addDescriptor(new BLE2902());
+
+  // // Start the service
+  // pService->start();
+
+  // // Start advertising
+  // BLEAdvertising *pAdvertising = BLEDevice::getAdvertising();
+  // pAdvertising->addServiceUUID(SERVICE_UUID);
+  // pAdvertising->setScanResponse(true);
+  // //pAdvertising->setMinInterval();
+  // pAdvertising->setMinPreferred(0x06);  // functions that help with iPhone connections issue
+  // pAdvertising->setMinPreferred(0x12);
+  // BLEDevice::startAdvertising();
+    // Create the BLE Device
+  BLEDevice::init("FYDPGloveRight");
+
   // Create the BLE Server
   pServer = BLEDevice::createServer();
   pServer->setCallbacks(new ServerCallback());
-
-  // Create the BLE Service
   BLEService *pService = pServer->createService(SERVICE_UUID);
 
-  // Create the BLE Characteristic
-  pCharacteristic = pService->createCharacteristic(
-                      CHARACTERISTIC_UUID,
-                      BLECharacteristic::PROPERTY_NOTIFY  // Add notify property
-                    );
-  pWriteCharacteristic = pService->createCharacteristic(
-                      WRITE_CHARACTERISTIC_UUID,
-                      BLECharacteristic::PROPERTY_WRITE  // Add notify property
-                    );
-
-  // Set callback for the write characteristic
-  pWriteCharacteristic->setCallbacks(new PeripheralCallback());
-
-  // Create a BLE Descriptor
+  pCharacteristic = pService->createCharacteristic(CHARACTERISTIC_UUID_TX, BLECharacteristic::PROPERTY_NOTIFY);
   pCharacteristic->addDescriptor(new BLE2902());
+
+  pWriteCharacteristic = pService->createCharacteristic(CHARACTERISTIC_UUID_RX, BLECharacteristic::PROPERTY_WRITE);
+  pWriteCharacteristic->setCallbacks(new PeripheralCallback());
 
   // Start the service
   pService->start();
@@ -76,10 +101,10 @@ void initBluetooth(void){
   BLEAdvertising *pAdvertising = BLEDevice::getAdvertising();
   pAdvertising->addServiceUUID(SERVICE_UUID);
   pAdvertising->setScanResponse(true);
-  //pAdvertising->setMinInterval();
   pAdvertising->setMinPreferred(0x06);  // functions that help with iPhone connections issue
-  pAdvertising->setMinPreferred(0x12);
+  pAdvertising->setMaxPreferred(0x06);
   BLEDevice::startAdvertising();
+  // Log::println("Waiting a client connection to notify...");
  
   Serial.println("Characteristic defined! Now you can read it in your phone!");
 }
