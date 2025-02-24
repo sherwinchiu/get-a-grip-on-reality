@@ -1,3 +1,4 @@
+#include "esp32-hal-gpio.h"
 #include <Arduino.h>
 #include <BLEDevice.h>
 #include <BLEServer.h>
@@ -8,6 +9,7 @@
 #include "bluetooth.hpp"
 #include "logger.hpp"
 #include "shared.h"
+#include "servo.hpp"
 
 BLEServer *pServer = NULL;
 BLECharacteristic* pCharacteristic = NULL;
@@ -28,21 +30,24 @@ void ServerCallback::onConnect(BLEServer *pServer) {
 void ServerCallback::onDisconnect(BLEServer *pServer) {
   deviceConnected = false;
 }
-
-void PeripheralCallback::onWrite(BLECharacteristic *pCharacteristic) {
+class MyCharacteristicCallbacks : public BLECharacteristicCallbacks {
+  void onWrite(BLECharacteristic *pCharacteristic) {
     String rxValue = pCharacteristic->getValue();
-
+    digitalWrite(21, HIGH);
     if (rxValue.length() > 0) {
-      Log::println("*********");
-      Log::print("Received Value: ");
-      for (int i = 0; i < rxValue.length(); i++) {
-        Log::print(rxValue[i]);
+      int servo_pos[NUM_SERVO_ROWS] = {0, 0, 0, 0, 0};
+      for (int i = 0; i < rxValue.length(); i += 2) {
+        servo_pos[i/2] = map(rxValue[i], 0, 255, 0, 180);
       }
-
-      Log::println();
-      Log::println("*********");
+      move_servos(servo_pos);
     }
+   // delay(300);
+    digitalWrite(21, LOW);
   }
+};
+void PeripheralCallback::onWrite(BLECharacteristic *pCharacteristic) {
+    
+}
 
 void initBluetooth(void){
   // // Create the BLE Device
@@ -92,7 +97,8 @@ void initBluetooth(void){
   pCharacteristic->addDescriptor(new BLE2902());
 
   pWriteCharacteristic = pService->createCharacteristic(CHARACTERISTIC_UUID_RX, BLECharacteristic::PROPERTY_WRITE);
-  pWriteCharacteristic->setCallbacks(new PeripheralCallback());
+  pWriteCharacteristic->setCallbacks(new MyCharacteristicCallbacks());
+  pWriteCharacteristic->addDescriptor(new BLE2902());
 
   // Start the service
   pService->start();

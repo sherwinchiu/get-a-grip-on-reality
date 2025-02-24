@@ -5,6 +5,7 @@
 #include "bluetooth.hpp"
 #include "imu.hpp"
 #include "logger.hpp"
+#include "servo.hpp"
 
 
 bool run_callibration = true;
@@ -14,6 +15,8 @@ void setup() {
   Serial.println("Starting");
   initBluetooth();
   //initImu();
+  pinMode(21, OUTPUT);
+  init_servos();
   init_hall();
 
   // while(!isBluetoothConnected());
@@ -31,6 +34,6 @@ void loop() {
   bluetoothTask();
   //imuTask();
   // print_hall();
-  delay(9);
+  delay(30);
 }
 

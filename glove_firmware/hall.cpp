@@ -5,8 +5,8 @@
 #include "logger.hpp"
 
 #ifdef RIGHT_HAND
-const static int hall_pins[NUM_HALL_ROWS][HALL_SENSORS_PER_FINGER] = { { 4, 5, 6 }, // segment 0, segment 1, splay 
-                                                                       { 7, 15, 16 },
+const static int hall_pins[NUM_HALL_ROWS][HALL_SENSORS_PER_FINGER] = { { 4, 5, 6 }, // segment 0, segment 1, splay thumb
+                                                                       { 7, 15, 16 }, // index
                                                                        { 17, 18, 8 },
                                                                        { 3, 9, 10 },
                                                                        { 11, 12, 13 } };
@@ -55,7 +55,14 @@ void init_hall() {
 int** read_hall() {
   for (uint8_t i = 0; i < NUM_HALL_ROWS; ++i) {
     for (uint8_t j = 0; j < HALL_SENSORS_PER_FINGER; ++j) {
-      hall[i][j] = map(analogRead(hall_pins[i][j]), min_hall_value[i][j], max_hall_value[i][j], 0, 4096);
+      int temp_hall_value = analogRead(hall_pins[i][j]);
+      if (temp_hall_value > max_hall_value[i][j]){
+        temp_hall_value = max_hall_value[i][j] - 1;
+      } else if (temp_hall_value < min_hall_value[i][j]) {
+        temp_hall_value = min_hall_value[i][j] + 1;
+      }
+      hall[i][j] = map(temp_hall_value, min_hall_value[i][j], max_hall_value[i][j], 0, 4095);
+
     }
   }
   return (int**)hall;
@@ -63,7 +70,7 @@ int** read_hall() {
 int** read_hall_calibration() {  // false for min, true for max
   for (uint8_t i = 0; i < NUM_HALL_ROWS; ++i) {
     for (uint8_t j = 0; j < HALL_SENSORS_PER_FINGER; ++j) {
-        int temp_hall_value = individual_hall_callibration(analogRead(hall_pins[i][j]));
+        int temp_hall_value = analogRead(hall_pins[i][j]);
         if (min_hall_value[i][j] > temp_hall_value) {
           min_hall_value[i][j] = temp_hall_value;
         }
@@ -78,27 +85,17 @@ int** read_hall_calibration() {  // false for min, true for max
 void hall_callibration() {
   Serial.println("Please open, then close your hand so that we can calibrate!");
   int start_time = millis();
-  while (millis() - start_time < 5000) {  // for five seconds
+  //digitalWrite(21, HIGH);
+  while (millis() - start_time < 10000) {  // for five seconds
     // we need to read all hall sensor values at the minimum and maximum state
     read_hall_calibration();
-    read_hall_calibration();
+    
   }
+  //digitalWrite(21, LOW);
   // store in EEPROM?
   Serial.println("Values calibrated!");
 }
 
-// range of hall sensor is from 1200 - 1800 or 1200 - 300 depending on magnet orientation
-// 255 will be 90 degrees finger bed, while 0 is 0 degrees finger bed
-// manual calibration for initial
-int individual_hall_callibration(int hall_reading) {
-  int new_reading = 0;
-  if (hall_reading >= 1200 && hall_reading <= 1800) {  // assume north magnet reading
-    new_reading = map(hall_reading, 1200, 1800, 0, 4095);
-  } else if (hall_reading >= 300 && hall_reading <= 1200) { // assume south magnet
-    new_reading = map(hall_reading, 1200, 700, 0, 4095);
-  }
-  return new_reading;
-}
 
 void print_hall(void) {
   char buffer[8];
@@ -118,8 +115,10 @@ void construct_package() {
   for (uint8_t i = 0; i < NUM_HALL_ROWS; ++i) {
     for (uint8_t j = 0; j < HALL_SENSORS_PER_FINGER - 1; ++j) { // don't include splay
       writeUnsignedShortToCharArrayLE(hall[i][j], package_data.bend_angle, bend_count); // should call this 20 times
-      bend_count += 2; 
+      bend_count += 2;
+      // writeUnsignedShortToCharArrayLE(4096 * i + 410*j, package_data.bend_angle, bend_count); // should call this 20 times
     }
+    
     writeUnsignedShortToCharArrayLE(hall[i][2], package_data.splay, splay_count);
     splay_count += 2;
   }
