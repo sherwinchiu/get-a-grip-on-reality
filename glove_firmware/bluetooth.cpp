@@ -1,12 +1,13 @@
-#include "esp32-hal-gpio.h"
+#include "bluetooth.hpp"
+
 #include <Arduino.h>
 #include <BLEDevice.h>
 #include <BLEServer.h>
 #include <BLEUtils.h>
 #include <BLE2902.h>
 
+#include "esp32-hal-gpio.h"
 #include "hall.hpp"
-#include "bluetooth.hpp"
 #include "logger.hpp"
 #include "shared.h"
 #include "servo.hpp"

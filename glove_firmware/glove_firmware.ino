@@ -3,7 +3,7 @@
 #include <EEPROM.h>
 #include "hall.hpp"
 #include "bluetooth.hpp"
-#include "imu.hpp"
+// #include "imu.hpp"
 #include "logger.hpp"
 #include "servo.hpp"
 
@@ -22,18 +22,19 @@ void setup() {
   // while(!isBluetoothConnected());
   // Log::println("Starting");
   // two modes: normal mode or hall calibration mode
-  if (run_callibration) {
-     // run callibration for hall sensors
-     hall_callibration();
-  } else {
-    // run normally
-  }
+  // if (run_callibration) {
+  //    // run callibration for hall sensors
+  //    hall_callibration();
+  // }
 }
 
+uint32_t lastSend;
 void loop() {
+  lastSend = millis();
   bluetoothTask();
-  //imuTask();
-  // print_hall();
-  delay(30);
+  print_hall();
+  // read_hall();
+  // imuTask();
+  while(lastSend + 30 > millis()) delay(1);
 }
 

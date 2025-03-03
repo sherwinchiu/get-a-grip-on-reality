@@ -1,5 +1,9 @@
 #ifndef SHARED_H
 #define SHARED_H
+//*** Which hand to compile for ***//
+//#define LEFT_HAND
+#define RIGHT_HAND
+
 struct InputData {
     unsigned char battery_lvl[1];        // 1 byte for battery level 0 -> 99
     unsigned char bend_angle[20];         // 20 bytes for finger bend, 4 bytes/finger, 2 bytes/first two segments
