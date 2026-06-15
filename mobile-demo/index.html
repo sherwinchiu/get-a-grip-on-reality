@@ -1,0 +1,690 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+<title>Haptic Glove · Telemetry Console</title>
+
+<!-- Distinctive type: Chakra Petch (squared industrial display) + IBM Plex Mono (instrument data) -->
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+
+<style>
+/* ============================================================================
+   AESTHETIC: dark "lab instrument / telemetry console".
+   Blueprint grid, monospace readouts, lime = live sensor, amber = force,
+   red = grab, cyan = link-up. HUD corner ticks on every panel.
+   ========================================================================== */
+:root{
+  --bg:#06080b; --bg2:#0a0e13; --panel:#0c1117; --panel-2:#0f161d;
+  --line:#1a2630; --line-hi:#2b3f4d;
+  --ink:#c9d6df; --ink-dim:#5f7585; --ink-faint:#3a4a57;
+  --lime:#9bff1a; --amber:#ff8a1e; --red:#ff3344; --cyan:#34e2e2;
+  --mono:'IBM Plex Mono', ui-monospace, monospace;
+  --disp:'Chakra Petch', var(--mono);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{
+  font-family:var(--mono);
+  color:var(--ink);
+  background:
+    radial-gradient(120% 90% at 50% -10%, #0d141b 0%, var(--bg) 60%),
+    var(--bg);
+  overflow:hidden;
+  -webkit-font-smoothing:antialiased;
+}
+/* faint blueprint grid + scanlines over the whole app */
+body::before{
+  content:"";position:fixed;inset:0;pointer-events:none;z-index:0;
+  background-image:
+    linear-gradient(var(--line) 1px, transparent 1px),
+    linear-gradient(90deg, var(--line) 1px, transparent 1px);
+  background-size:44px 44px;
+  -webkit-mask-image:radial-gradient(110% 80% at 50% 30%, #000 30%, transparent 90%);
+          mask-image:radial-gradient(110% 80% at 50% 30%, #000 30%, transparent 90%);
+  opacity:.35;
+}
+body::after{
+  content:"";position:fixed;inset:0;pointer-events:none;z-index:60;
+  background:repeating-linear-gradient(0deg, rgba(0,0,0,0) 0 2px, rgba(0,0,0,.18) 2px 3px);
+  mix-blend-mode:overlay;opacity:.5;
+}
+
+/* ---- HUD top bar ---- */
+.hud-bar{
+  position:relative;z-index:10;display:flex;align-items:center;justify-content:space-between;
+  gap:14px;padding:12px 18px;border-bottom:1px solid var(--line);
+  background:linear-gradient(180deg, rgba(13,19,26,.9), rgba(8,11,15,.7));
+  backdrop-filter:blur(6px);
+}
+.brand{display:flex;align-items:center;gap:12px;font-family:var(--disp);letter-spacing:.16em;
+  font-weight:700;text-transform:uppercase;font-size:14px}
+.brand .glyph{color:var(--lime);font-size:18px;text-shadow:0 0 14px var(--lime)}
+.brand .sub{color:var(--ink-dim);font-weight:500;letter-spacing:.22em;font-size:11px}
+.bar-right{display:flex;align-items:center;gap:10px;flex-wrap:wrap;justify-content:flex-end}
+
+.readout{font-size:11px;color:var(--ink-dim);letter-spacing:.1em;border:1px solid var(--line);
+  padding:7px 10px;border-radius:2px;background:var(--panel);white-space:nowrap}
+.readout b{color:var(--lime);font-weight:600}
+
+.status{display:flex;align-items:center;gap:8px;font-size:11px;letter-spacing:.16em;
+  border:1px solid var(--line);padding:7px 11px;border-radius:2px;background:var(--panel);text-transform:uppercase}
+.status .dot{width:9px;height:9px;border-radius:50%;background:var(--ink-faint);box-shadow:0 0 0 0 transparent}
+.status.is-sim .dot{background:var(--amber);box-shadow:0 0 12px var(--amber);animation:pulse 1.6s infinite}
+.status.is-link .dot{background:var(--cyan);box-shadow:0 0 12px var(--cyan)}
+.status.is-conn .dot{background:var(--lime);box-shadow:0 0 12px var(--lime);animation:pulse 1.6s infinite}
+.status.is-err  .dot{background:var(--red);box-shadow:0 0 12px var(--red)}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
+
+/* ---- buttons ---- */
+.btn{font-family:var(--disp);font-weight:600;text-transform:uppercase;letter-spacing:.12em;
+  font-size:12px;color:var(--ink);background:var(--panel);border:1px solid var(--line-hi);
+  padding:9px 14px;border-radius:2px;cursor:pointer;transition:.15s ease;position:relative;white-space:nowrap}
+.btn:hover{border-color:var(--lime);color:#fff;box-shadow:0 0 0 1px var(--lime) inset, 0 0 18px rgba(155,255,26,.18)}
+.btn:active{transform:translateY(1px)}
+.btn[disabled]{opacity:.4;cursor:not-allowed;filter:grayscale(.6)}
+.btn-primary{background:linear-gradient(180deg, rgba(155,255,26,.16), rgba(155,255,26,.04));
+  border-color:var(--lime);color:#dfffae;text-shadow:0 0 10px rgba(155,255,26,.4)}
+.btn-primary:hover{box-shadow:0 0 22px rgba(155,255,26,.35), 0 0 0 1px var(--lime) inset}
+.btn-ghost{background:transparent}
+
+/* ---- layout ---- */
+main{position:relative;z-index:5;display:flex;height:calc(100% - 53px);overflow:hidden}
+.stage{position:relative;flex:1 1 auto;min-width:0}
+#three{display:block;width:100%;height:100%}
+.stage-tag{position:absolute;font-size:10px;letter-spacing:.22em;color:var(--ink-dim);
+  text-transform:uppercase;pointer-events:none}
+.stage-tag.tl{top:14px;left:16px}
+.stage-tag.bl{bottom:14px;left:16px;color:var(--ink-faint)}
+.stage-tag b{color:var(--lime)}
+
+.grab-badge{position:absolute;top:14px;right:16px;font-family:var(--disp);font-weight:700;
+  letter-spacing:.2em;font-size:13px;color:var(--red);border:1px solid var(--red);
+  padding:7px 13px;border-radius:2px;background:rgba(255,51,68,.08);
+  box-shadow:0 0 20px rgba(255,51,68,.35);opacity:0;transform:translateY(-6px);transition:.18s}
+.grab-badge.on{opacity:1;transform:none}
+
+/* ---- sidebar panels ---- */
+.sidebar{flex:0 0 340px;max-width:42vw;display:flex;flex-direction:column;gap:12px;
+  padding:14px;overflow-y:auto;border-left:1px solid var(--line);background:rgba(7,10,14,.55)}
+.panel{position:relative;background:linear-gradient(180deg, var(--panel), var(--panel-2));
+  border:1px solid var(--line);border-radius:3px;padding:14px 14px 16px}
+/* HUD corner ticks */
+.panel::before,.panel::after{content:"";position:absolute;width:10px;height:10px;pointer-events:none}
+.panel::before{top:-1px;left:-1px;border-top:1px solid var(--line-hi);border-left:1px solid var(--line-hi)}
+.panel::after{bottom:-1px;right:-1px;border-bottom:1px solid var(--line-hi);border-right:1px solid var(--line-hi)}
+.panel h2{font-family:var(--disp);font-size:11px;letter-spacing:.24em;text-transform:uppercase;
+  color:var(--ink-dim);margin-bottom:12px;display:flex;align-items:center;gap:8px}
+.panel h2::before{content:"";width:6px;height:6px;background:var(--lime);box-shadow:0 0 8px var(--lime)}
+.panel.force h2::before{background:var(--amber);box-shadow:0 0 8px var(--amber)}
+
+.spawn-row{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:10px}
+.spawn-row .btn{padding:11px 6px;font-size:12px;display:flex;flex-direction:column;gap:3px;align-items:center}
+.spawn-row .btn .ico{font-size:16px}
+.btn.sel{border-color:var(--amber);color:#ffd9af;box-shadow:0 0 0 1px var(--amber) inset,0 0 16px rgba(255,138,30,.25)}
+.clear-btn{width:100%;font-size:11px;padding:8px}
+
+.kv{display:flex;justify-content:space-between;font-size:12px;padding:3px 0;color:var(--ink-dim)}
+.kv b{color:var(--ink);font-weight:500}
+.kv .lime{color:var(--lime)} .kv .amber{color:var(--amber)} .kv .red{color:var(--red)}
+
+.hex{font-size:11px;color:var(--amber);word-break:break-all;background:#080d10;
+  border:1px solid var(--line);padding:8px;border-radius:2px;margin-top:8px;letter-spacing:.04em}
+
+/* meter bars */
+.meter{display:grid;grid-template-columns:46px 1fr 40px;align-items:center;gap:8px;margin:5px 0;font-size:11px}
+.meter .name{color:var(--ink-dim);letter-spacing:.06em}
+.meter .track{height:8px;background:#0a1014;border:1px solid var(--line);border-radius:2px;overflow:hidden;position:relative}
+.meter .fill{position:absolute;inset:0;width:0;transform-origin:left;
+  background:linear-gradient(90deg, rgba(155,255,26,.35), var(--lime));transition:width .06s linear}
+.meter.pip .fill{background:linear-gradient(90deg, rgba(52,226,226,.3), var(--cyan))}
+.meter.force .fill{background:linear-gradient(90deg, rgba(255,138,30,.3), var(--amber))}
+.meter .val{color:var(--ink);text-align:right;font-variant-numeric:tabular-nums}
+
+.battery{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+.battery .cell{flex:1;height:14px;border:1px solid var(--line-hi);border-radius:2px;position:relative;overflow:hidden;background:#0a1014}
+.battery .cell i{position:absolute;inset:1px;width:60%;background:linear-gradient(90deg,#5fae1a,var(--lime));transition:width .2s}
+.battery .pct{font-size:12px;color:var(--lime);width:42px;text-align:right}
+
+.finger-grid{display:grid;grid-template-columns:1fr 1fr;gap:0 14px}
+.note{font-size:10px;color:var(--ink-faint);margin-top:8px;line-height:1.5;letter-spacing:.02em}
+
+.banner{position:relative;z-index:10;display:none;align-items:center;gap:10px;
+  padding:9px 18px;font-size:12px;letter-spacing:.04em;background:rgba(255,51,68,.1);
+  border-bottom:1px solid rgba(255,51,68,.4);color:#ffb3bb}
+.banner.show{display:flex}
+
+/* responsive: stack on phones */
+@media (max-width:820px){
+  main{flex-direction:column;height:calc(100% - 53px)}
+  .stage{flex:0 0 46%}
+  .sidebar{flex:1 1 auto;max-width:none;border-left:none;border-top:1px solid var(--line);flex-direction:column}
+  .brand .sub{display:none}
+}
+</style>
+</head>
+<body>
+
+<header class="hud-bar">
+  <div class="brand">
+    <span class="glyph">◣◢</span> Haptic&nbsp;Glove
+    <span class="sub">// Telemetry Console</span>
+  </div>
+  <div class="bar-right">
+    <div class="readout">STREAM <b id="rate">0</b> Hz</div>
+    <div id="status" class="status is-sim"><span class="dot"></span><span class="label" id="statusLabel">Simulation</span></div>
+    <button id="simBtn" class="btn btn-ghost">Sim: On</button>
+    <button id="connectBtn" class="btn btn-primary">Connect Glove</button>
+  </div>
+</header>
+
+<div id="banner" class="banner"></div>
+
+<main>
+  <section class="stage">
+    <canvas id="three"></canvas>
+    <div class="stage-tag tl">UNIT <b>FYDPGloveRight</b> · right hand</div>
+    <div class="stage-tag bl">drag to orbit · scroll to zoom</div>
+    <div id="grabBadge" class="grab-badge">● GRAB</div>
+  </section>
+
+  <aside class="sidebar">
+    <!-- OBJECTS -->
+    <div class="panel">
+      <h2>Objects</h2>
+      <div class="spawn-row">
+        <button class="btn" data-obj="ball"><span class="ico">⬤</span>Ball</button>
+        <button class="btn" data-obj="cube"><span class="ico">⬛</span>Cube</button>
+        <button class="btn" data-obj="mouse"><span class="ico">🖱</span>Mouse</button>
+      </div>
+      <button id="clearObj" class="btn btn-ghost clear-btn">Clear Object</button>
+      <div class="kv" style="margin-top:10px"><span>Spawned</span><b id="objName">none</b></div>
+      <div class="kv"><span>Engage&nbsp;@</span><b class="amber" id="objEngage">—</b></div>
+      <div class="kv"><span>Force</span><b class="amber" id="objForce">—</b></div>
+    </div>
+
+    <!-- FORCE OUTPUT -->
+    <div class="panel force">
+      <h2>Force Output</h2>
+      <div class="kv"><span>Grab state</span><b id="grabState">open</b></div>
+      <div class="kv"><span>Writes</span><b id="writeRate" class="amber">0</b><span style="color:var(--ink-faint)">/s</span></div>
+      <div id="forceBars"></div>
+      <div class="kv" style="margin-top:8px"><span>Last packet (10B)</span></div>
+      <div class="hex" id="forceHex">—— —— —— —— ——</div>
+    </div>
+
+    <!-- TELEMETRY -->
+    <div class="panel">
+      <h2>Sensor Telemetry</h2>
+      <div class="battery">
+        <span style="font-size:11px;color:var(--ink-dim);letter-spacing:.1em">BATT</span>
+        <div class="cell"><i id="battFill"></i></div>
+        <span class="pct" id="battPct">—</span>
+      </div>
+      <div id="bendBars"></div>
+      <div class="kv" style="margin-top:8px"><span>Button</span><b id="btnVal">0</b></div>
+      <div class="kv"><span>Joystick</span><b id="joyVal">0, 0</b></div>
+      <div class="kv"><span>Orientation</span><b id="oriVal" class="lime">n/a</b></div>
+      <div class="note" id="dataNote"></div>
+    </div>
+  </aside>
+</main>
+
+<!-- Three.js (modules, no build step) -->
+<script type="importmap">
+{ "imports": {
+  "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+  "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+}}
+</script>
+
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+// All packet parsing / force encoding / grab logic lives in a dependency-free,
+// unit-tested module (glove-protocol.js + tests/). One source of truth shared by
+// the app AND the tests, so the firmware byte contract can never silently drift.
+import {
+  GATT, FORCE_PROFILES, GRAB,
+  parsePacket, splayToFingers, buildForcePacket, ZERO_FORCE,
+  graspPoseMet, synthPacket,
+} from './glove-protocol.js';
+
+/* ============================================================================
+   1. APP CONFIG  ── view / I-O settings (protocol constants come from the module)
+   ========================================================================== */
+// --- Force write rate-limit: send only the latest value, ~1 per 9 ms (matches firmware). ---
+const FORCE_WRITE_INTERVAL_MS = 9;
+
+// --- Hand kinematic limits (radians of joint travel at full curl / splay) ---
+const KIN = { mcpMax:1.30, pipMax:1.55, splayMax:0.28, curlSign:1, splaySign:1 };
+
+/* ============================================================================
+   2. THE GLOVE  ── one instance now; the class is built so a 2nd is a drop-in
+      (e.g. gloves.push(new Glove({role:'left', side:-1}))).
+   ========================================================================== */
+class Glove {
+  constructor({ role, side }){
+    this.role = role;
+    this.side = side;                       // +1 right, -1 left (mirrors hand model)
+    this.connected = false;
+    this.device = null; this.server = null;
+    this.notifyChar = null; this.forceChar = null;
+    this.state = idleState();
+    this.packetCount = 0;
+    this.badPackets = 0;
+    this._connecting = false;
+    this._pendingForce = null; this._writeBusy = false; this._writeTick = 0;
+    // Bound handlers stored ONCE so we can add *and* remove the same reference.
+    // Chrome may hand back the same BluetoothDevice object on reconnect, so
+    // adding an anonymous listener each connect would stack duplicates and fire
+    // _onDrop N times. Removing-then-adding the same ref keeps it idempotent.
+    this._onDropBound   = () => this._onDrop();
+    this._onPacketBound = (e) => this._onPacket(e);
+    this.hand = new HandModel(side);
+    scene.add(this.hand.group);
+  }
+
+  async connect(){
+    if (this._connecting || this.connected) return;   // ignore re-entrant clicks
+    if (!navigator.bluetooth) throw new Error('Web Bluetooth unavailable (use Chrome/Edge over https or localhost).');
+    this._connecting = true;
+    try {
+      setStatus('link', 'Selecting…');
+      // Chrome's in-page chooser claims the device — DO NOT pre-pair in OS settings.
+      this.device = await navigator.bluetooth.requestDevice({
+        filters: [{ namePrefix: GATT.deviceNamePrefix }],
+        optionalServices: [GATT.service],
+      });
+      this.device.removeEventListener('gattserverdisconnected', this._onDropBound);
+      this.device.addEventListener('gattserverdisconnected', this._onDropBound);
+
+      setStatus('link', 'Connecting…');
+      this.server = await this.device.gatt.connect();
+      try {
+        const svc = await this.server.getPrimaryService(GATT.service);
+        this.notifyChar = await svc.getCharacteristic(GATT.notify);
+        this.forceChar  = await svc.getCharacteristic(GATT.write);
+        this.notifyChar.removeEventListener('characteristicvaluechanged', this._onPacketBound);
+        this.notifyChar.addEventListener('characteristicvaluechanged', this._onPacketBound);
+        await this.notifyChar.startNotifications();
+      } catch (svcErr) {
+        // Connected to *a* device but its GATT table isn't what we expect (wrong
+        // or old firmware). Tear down so we don't sit half-connected forever.
+        this.disconnect();
+        throw new Error('Connected, but the glove service/characteristics were not found — check the firmware UUIDs. (' + (svcErr.message || svcErr) + ')');
+      }
+
+      this.connected = true;
+      this._pendingForce = null; this._writeBusy = false;
+      simEnabled = false; syncSimBtn();
+      setStatus('conn', this.device.name || 'Connected');
+      showBanner('');
+    } finally {
+      this._connecting = false;
+    }
+  }
+
+  // BLE notification callback. e.target.value is a DataView. Guarded so a single
+  // short/garbled packet can never throw inside the event callback and wedge the
+  // notification stream — we just count and drop it.
+  _onPacket(e){
+    try { this.state = parsePacket(e.target.value); this.packetCount++; }
+    catch (_) { this.badPackets++; }
+  }
+
+  _onDrop(){
+    this.connected = false;
+    this.notifyChar = this.forceChar = null;
+    this._pendingForce = null; this._writeBusy = false;   // don't write into a dead link
+    setStatus('err', 'Disconnected');
+    showBanner('Glove dropped the link. Tap “Connect Glove” to reconnect — or it falls back to Simulation.');
+    // reset the connect button and fall back to Simulation so the demo keeps moving
+    connectBtn.textContent = 'Connect Glove'; connectBtn.disabled = false;
+    simEnabled = true; syncSimBtn();
+  }
+
+  disconnect(){ try { if (this.device?.gatt?.connected) this.device.gatt.disconnect(); } catch (_) {} }
+
+  // Non-blocking, non-overlapping, latest-only force writer (driven by the loop below).
+  async _flushForce(){
+    if (!this.connected || !this.forceChar || this._writeBusy || !this._pendingForce) return;
+    const data = this._pendingForce; this._pendingForce = null; this._writeBusy = true;
+    try { await this.forceChar.writeValueWithResponse(data); this._writeTick++; }
+    catch(_) { /* congestion — drop and try next tick */ }
+    finally { this._writeBusy = false; }
+  }
+  queueForce(data){ this._pendingForce = data; lastForceBytes = data; }
+}
+
+/* ============================================================================
+   5. 3D ARTICULATED HAND  ── jointed fingers, MCP + PIP per finger, splay at root
+   ========================================================================== */
+const matBone  = new THREE.MeshStandardMaterial({ color:0x95a3b0, metalness:0.55, roughness:0.42 });
+const matPalm  = new THREE.MeshStandardMaterial({ color:0x6c7c8a, metalness:0.5,  roughness:0.5 });
+const matJoint = new THREE.MeshStandardMaterial({ color:0x9bff1a, emissive:0x223a00, metalness:0.3, roughness:0.5 });
+
+function makePhalanx(radius, len, mat){
+  const m = new THREE.Mesh(new THREE.CapsuleGeometry(radius, len, 6, 14), mat);
+  m.position.y = len / 2 + radius * 0.5;   // base sits near the pivot
+  m.castShadow = true;
+  return m;
+}
+
+// Returns { root, mcp, pip } pivot groups. Curl rotates mcp/pip about local X; splay rotates root about Z.
+function makeFinger({ x, y, z=0, prox, dist, radius, baseRotZ=0, baseRotX=0 }){
+  const root = new THREE.Group(); root.position.set(x, y, z); root.rotation.z = baseRotZ; root.rotation.x = baseRotX;
+  const mcp  = new THREE.Group(); root.add(mcp);
+  mcp.add(new THREE.Mesh(new THREE.SphereGeometry(radius*1.18, 16, 16), matJoint));   // knuckle
+  mcp.add(makePhalanx(radius, prox, matBone));
+  const pip  = new THREE.Group(); pip.position.y = prox + radius; mcp.add(pip);
+  pip.add(new THREE.Mesh(new THREE.SphereGeometry(radius*0.98, 16, 16), matJoint));   // PIP joint
+  pip.add(makePhalanx(radius*0.9, dist, matBone));
+  return { root, mcp, pip };
+}
+
+class HandModel {
+  constructor(side = 1){
+    this.group = new THREE.Group();
+    this.group.scale.x = side;                 // mirror for a left hand
+    this.group.rotation.set(-0.35, 0.5, 0);    // pleasant 3/4 view
+
+    // palm
+    const palm = new THREE.Mesh(new THREE.BoxGeometry(1.05, 1.15, 0.34), matPalm);
+    palm.geometry.translate(0, -0.05, 0);
+    palm.castShadow = true;
+    this.group.add(palm);
+
+    // four fingers across the top edge of the palm
+    const xs = [-0.36, -0.12, 0.12, 0.36];      // index, middle, ring, pinky
+    const proxLens = [0.46, 0.52, 0.48, 0.40];
+    const distLens = [0.36, 0.42, 0.40, 0.32];
+    this.fingers = [];
+    // thumb (index 0) — offset to the side, rotated for opposition
+    const thumb = makeFinger({ x:-0.56, y:-0.12, z:0.12, prox:0.40, dist:0.34, radius:0.14, baseRotZ:0.95, baseRotX:0.25 });
+    this.group.add(thumb.root); this.fingers.push(thumb);
+    for (let i = 0; i < 4; i++){
+      const fg = makeFinger({ x:xs[i], y:0.55, prox:proxLens[i], dist:distLens[i], radius:0.115 });
+      this.group.add(fg.root); this.fingers.push(fg);
+      fg._restZ = 0;
+    }
+    this.fingers[0]._restZ = 0.95;              // thumb keeps its opposition baseline
+  }
+
+  apply(state){
+    const splays = splayToFingers(state.splayRaw);
+    for (let f = 0; f < 5; f++){
+      const fg = this.fingers[f];
+      fg.mcp.rotation.x = KIN.curlSign  * state.fingers[f].mcp * KIN.mcpMax;
+      fg.pip.rotation.x = KIN.curlSign  * state.fingers[f].pip * KIN.pipMax;
+      const restZ = fg._restZ || 0;
+      fg.root.rotation.z = restZ + KIN.splaySign * splays[f] * KIN.splayMax;
+    }
+  }
+}
+
+/* ============================================================================
+   6. SCENE
+   ========================================================================== */
+const canvas = document.getElementById('three');
+const renderer = new THREE.WebGLRenderer({ canvas, antialias:true, alpha:true });
+renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+renderer.shadowMap.enabled = true;
+
+const scene = new THREE.Scene();
+scene.fog = new THREE.Fog(0x06080b, 6, 16);
+
+const camera = new THREE.PerspectiveCamera(42, 1, 0.1, 100);
+camera.position.set(0.4, 0.6, 4.4);
+
+const controls = new OrbitControls(camera, renderer.domElement);
+controls.enableDamping = true; controls.dampingFactor = 0.08;
+controls.target.set(0, 0.1, 0); controls.minDistance = 2.2; controls.maxDistance = 9;
+
+// lighting — cool key + lime hemi + amber rim for the instrument look
+scene.add(new THREE.HemisphereLight(0x6f87a0, 0x0a0e13, 0.85));
+const key = new THREE.DirectionalLight(0xffffff, 1.4); key.position.set(3, 5, 4);
+key.castShadow = true; key.shadow.mapSize.set(1024,1024); scene.add(key);
+const rim = new THREE.PointLight(0xff8a1e, 0.8, 20); rim.position.set(-3, 1, -2); scene.add(rim);
+const fill = new THREE.PointLight(0x9bff1a, 0.5, 20); fill.position.set(2, -1, 3); scene.add(fill);
+
+// floor grid matching the HUD aesthetic
+const grid = new THREE.GridHelper(24, 48, 0x2b3f4d, 0x121a21);
+grid.position.y = -1.25; scene.add(grid);
+const floor = new THREE.Mesh(new THREE.PlaneGeometry(40,40),
+  new THREE.MeshStandardMaterial({ color:0x080c10, metalness:0.2, roughness:0.95 }));
+floor.rotation.x = -Math.PI/2; floor.position.y = -1.26; floor.receiveShadow = true; scene.add(floor);
+
+function resize(){
+  const w = canvas.clientWidth, h = canvas.clientHeight;
+  if (canvas.width !== w || canvas.height !== h){
+    renderer.setSize(w, h, false);
+    camera.aspect = w / h; camera.updateProjectionMatrix();
+  }
+}
+
+/* ---- spawnable objects ---- */
+let currentObject = null;   // { type, mesh, profile }
+const objHolder = new THREE.Group(); objHolder.position.set(0, -0.25, 1.35); scene.add(objHolder);
+
+function spawnObject(type){
+  clearObject();
+  const profile = FORCE_PROFILES[type];
+  let geo;
+  if (type === 'ball') geo = new THREE.SphereGeometry(0.42, 32, 24);
+  else if (type === 'cube') geo = new THREE.BoxGeometry(0.62, 0.62, 0.62);
+  else { geo = new THREE.SphereGeometry(0.42, 28, 20); }     // mouse: squashed sphere
+  const mat = new THREE.MeshStandardMaterial({ color:profile.color, metalness:0.3, roughness:0.45,
+    emissive:profile.color, emissiveIntensity:0.06 });
+  const mesh = new THREE.Mesh(geo, mat); mesh.castShadow = true;
+  if (type === 'mouse') mesh.scale.set(1.25, 0.55, 1.7);
+  objHolder.add(mesh);
+  currentObject = { type, mesh, profile };
+  // UI
+  document.getElementById('objName').textContent = profile.label;
+  document.getElementById('objEngage').textContent = Math.round(profile.engage*100) + '%';
+  document.getElementById('objForce').textContent  = Math.round(profile.force*100) + '%';
+  for (const b of document.querySelectorAll('[data-obj]')) b.classList.toggle('sel', b.dataset.obj === type);
+}
+function clearObject(){
+  if (currentObject){ objHolder.remove(currentObject.mesh); currentObject.mesh.geometry.dispose(); }
+  currentObject = null; isGrabbing = false;
+  document.getElementById('objName').textContent = 'none';
+  document.getElementById('objEngage').textContent = '—';
+  document.getElementById('objForce').textContent = '—';
+  for (const b of document.querySelectorAll('[data-obj]')) b.classList.remove('sel');
+}
+
+/* ============================================================================
+   7. GRAB DETECTION
+   The pose test (graspPoseMet) lives in the tested protocol module; here we just
+   AND it with "is an object spawned?" and drive the force write + visuals.
+   ========================================================================== */
+let isGrabbing = false;
+function detectGrab(state){ return !!currentObject && graspPoseMet(state); }
+function updateGrab(state){
+  const g = detectGrab(state);
+  if (g !== isGrabbing){
+    isGrabbing = g;
+    glove.queueForce(g ? buildForcePacket(currentObject.profile) : ZERO_FORCE);
+    document.getElementById('grabState').textContent = g ? 'GRABBING' : 'open';
+    document.getElementById('grabState').style.color = g ? 'var(--red)' : 'var(--ink)';
+    document.getElementById('grabBadge').classList.toggle('on', g);
+  }
+  if (currentObject){
+    const t = isGrabbing ? 0.9 : 0.06;
+    currentObject.mesh.material.emissiveIntensity += (t - currentObject.mesh.material.emissiveIntensity) * 0.2;
+    const s = isGrabbing ? 0.92 : 1.0;   // squeeze when grabbed
+    const base = currentObject.type === 'mouse' ? [1.25,0.55,1.7] : [1,1,1];
+    currentObject.mesh.scale.set(base[0]*s, base[1]*s, base[2]*s);
+  }
+}
+
+/* ============================================================================
+   8. SIMULATION MODE  ── synthPacket() (in the protocol module) builds a REAL
+      firmware-format packet so the whole pipeline (parse -> hand -> grab ->
+      force) runs offline. simEnabled just toggles whether we use it.
+   ========================================================================== */
+let simEnabled = true;
+
+/* ============================================================================
+   9. UI / DEBUG PANEL
+   ========================================================================== */
+const statusEl = document.getElementById('status');
+const statusLabel = document.getElementById('statusLabel');
+function setStatus(kind, label){
+  statusEl.className = 'status ' + ({ sim:'is-sim', link:'is-link', conn:'is-conn', err:'is-err' }[kind] || '');
+  statusLabel.textContent = label;
+}
+function showBanner(msg){
+  const b = document.getElementById('banner');
+  b.textContent = msg ? '⚠ ' + msg : ''; b.classList.toggle('show', !!msg);
+}
+function syncSimBtn(){ document.getElementById('simBtn').textContent = 'Sim: ' + (simEnabled ? 'On' : 'Off'); }
+
+// build meter rows once
+const FINGER_NAMES = ['THM','IDX','MID','RNG','PNK'];
+const bendBars = document.getElementById('bendBars');
+const forceBars = document.getElementById('forceBars');
+const bendRefs = [], forceRefs = [];
+FINGER_NAMES.forEach((nm, i) => {
+  bendBars.insertAdjacentHTML('beforeend',
+    `<div class="meter"><span class="name">${nm}·M</span><div class="track"><div class="fill" id="bm${i}"></div></div><span class="val" id="bmv${i}">0</span></div>
+     <div class="meter pip"><span class="name">${nm}·P</span><div class="track"><div class="fill" id="bp${i}"></div></div><span class="val" id="bpv${i}">0</span></div>`);
+  forceBars.insertAdjacentHTML('beforeend',
+    `<div class="meter force"><span class="name">${nm}</span><div class="track"><div class="fill" id="fb${i}"></div></div><span class="val" id="fbv${i}">0</span></div>`);
+  bendRefs.push({ m:document.getElementById('bm'+i), mv:document.getElementById('bmv'+i),
+                  p:document.getElementById('bp'+i), pv:document.getElementById('bpv'+i) });
+  forceRefs.push({ f:document.getElementById('fb'+i), fv:document.getElementById('fbv'+i) });
+});
+
+let lastForceBytes = ZERO_FORCE;
+let debugAcc = 0;
+function updateDebug(state, dt){
+  debugAcc += dt; if (debugAcc < 0.066) return; debugAcc = 0;   // ~15 Hz DOM updates
+
+  // battery
+  const pct = Math.round(Math.min(state.battery, 100));
+  document.getElementById('battFill').style.width = pct + '%';
+  document.getElementById('battPct').textContent = pct + '%';
+
+  // finger bend
+  for (let i = 0; i < 5; i++){
+    const fg = state.fingers[i];
+    bendRefs[i].m.style.width = (fg.mcp*100) + '%';
+    bendRefs[i].p.style.width = (fg.pip*100) + '%';
+    bendRefs[i].mv.textContent = (fg.mcpRaw ?? Math.round(fg.mcp*4095));
+    bendRefs[i].pv.textContent = (fg.pipRaw ?? Math.round(fg.pip*4095));
+  }
+  // force (per finger from last packet, engage byte shown as the bar)
+  for (let i = 0; i < 5; i++){
+    const eng = lastForceBytes[i*2] / 255;
+    forceRefs[i].f.style.width = (eng*100) + '%';
+    forceRefs[i].fv.textContent = lastForceBytes[i*2];
+  }
+  document.getElementById('btnVal').textContent = state.button;
+  document.getElementById('joyVal').textContent = `${state.joy.x}, ${state.joy.y}`;
+  document.getElementById('oriVal').textContent = state.orientation
+    ? `${state.orientation.roll.toFixed(0)}° ${state.orientation.pitch.toFixed(0)}° ${state.orientation.yaw.toFixed(0)}°`
+    : 'n/a';
+  document.getElementById('forceHex').textContent =
+    Array.from(lastForceBytes).map(b => b.toString(16).padStart(2,'0')).join(' ');
+}
+
+document.getElementById('dataNote').innerHTML =
+  'Stream: 32-byte packet (44 w/ IMU), little-endian. Force: 10-byte, 2/finger ' +
+  '(engage·force). Firmware uses the engage byte as the servo angle.';
+
+/* ---- controls wiring ---- */
+const connectBtn = document.getElementById('connectBtn');
+connectBtn.addEventListener('click', async () => {
+  if (glove.connected){ glove.disconnect(); return; }
+  connectBtn.disabled = true; connectBtn.textContent = 'Connecting…';
+  try {
+    await glove.connect();
+    connectBtn.textContent = 'Disconnect';
+  } catch(err){
+    // User backing out of the device chooser is NOT an error — don't alarm them.
+    const cancelled = err && (err.name === 'NotFoundError' || /cancel/i.test(err.message || ''));
+    if (cancelled){
+      setStatus(simEnabled ? 'sim' : 'err', simEnabled ? 'Simulation' : 'Idle');
+      showBanner('');
+    } else {
+      setStatus('err', 'Failed');
+      showBanner(err.message || 'Connection failed.');
+    }
+    connectBtn.textContent = 'Connect Glove';
+    if (!navigator.bluetooth) connectBtn.disabled = true;
+  } finally {
+    if (navigator.bluetooth) connectBtn.disabled = false;   // re-enable unless BLE is wholly unavailable
+  }
+});
+document.getElementById('simBtn').addEventListener('click', () => {
+  simEnabled = !simEnabled; syncSimBtn();
+  if (!glove.connected) setStatus(simEnabled ? 'sim' : 'err', simEnabled ? 'Simulation' : 'Idle');
+});
+for (const b of document.querySelectorAll('[data-obj]')) b.addEventListener('click', () => spawnObject(b.dataset.obj));
+document.getElementById('clearObj').addEventListener('click', clearObject);
+
+function idleState(){
+  return { battery:0, fingers:Array.from({length:5},()=>({mcp:0,pip:0,mcpRaw:0,pipRaw:0})),
+           splayRaw:[2048,2048,2048,2048], button:0, joy:{x:128,y:128}, orientation:null };
+}
+
+/* ============================================================================
+   10. MAIN LOOP
+   ========================================================================== */
+const glove = new Glove({ role:'right', side:1 });
+const gloves = [glove];                      // <-- add a 2nd glove here later (drop-in)
+
+let rateCount = 0, rateTimer = 0, lastWriteCount = 0;
+glove._writeTick = 0;
+let prev = performance.now() / 1000;
+let simT = 0;
+
+// dedicated force-write pump (latest-only, rate-limited) — independent of frame rate
+setInterval(() => { glove._flushForce(); }, FORCE_WRITE_INTERVAL_MS);
+
+function loop(){
+  requestAnimationFrame(loop);
+  resize();
+  const now = performance.now() / 1000;
+  const dt = Math.min(now - prev, 0.05); prev = now;
+  simT += dt;
+
+  // choose the data source: live BLE > simulation > idle
+  let state;
+  if (glove.connected){ state = glove.state; }
+  else if (simEnabled){ state = parsePacket(synthPacket(simT)); }
+  else { state = idleState(); }
+
+  glove.hand.apply(state);
+  updateGrab(state);
+  updateDebug(state, dt);
+
+  // stream-rate readout
+  rateTimer += dt;
+  if (rateTimer >= 0.5){
+    document.getElementById('rate').textContent = glove.connected ? Math.round(glove.packetCount / rateTimer) : '—';
+    document.getElementById('writeRate').textContent = Math.round((glove._writeTick - lastWriteCount) / rateTimer);
+    lastWriteCount = glove._writeTick; glove.packetCount = 0; rateTimer = 0;
+  }
+
+  if (currentObject) objHolder.rotation.y += dt * 0.3;   // gentle idle spin
+  controls.update();
+  renderer.render(scene, camera);
+}
+
+// startup: Simulation Mode is live immediately so there's always a demo.
+syncSimBtn();
+if (!navigator.bluetooth){
+  showBanner('Web Bluetooth not available here — Simulation Mode is running. Use Chrome/Edge over https or localhost to connect a real glove.');
+}
+spawnObject('ball');     // start with something to grab
+loop();
+</script>
+</body>
+</html>
