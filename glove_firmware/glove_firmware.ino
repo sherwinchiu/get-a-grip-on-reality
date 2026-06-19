@@ -32,9 +32,8 @@ uint32_t lastSend;
 void loop() {
   lastSend = millis();
   bluetoothTask();
+  read_hall();
   print_hall();
-  // read_hall();
-  // imuTask();
   while(lastSend + 30 > millis()) delay(1);
 }
 
