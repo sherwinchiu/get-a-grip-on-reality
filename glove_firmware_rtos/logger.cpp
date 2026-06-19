@@ -10,6 +10,14 @@
 
 void logInit(unsigned long baud) {
     Serial.begin(baud);
+#if ARDUINO_USB_CDC_ON_BOOT
+    // On boards whose only USB is the ESP32-S3's NATIVE USB (CDC), Serial.write
+    // will BLOCK waiting for a host to read when no Serial Monitor is attached —
+    // which can stall boot. Setting the TX timeout to 0 makes prints non-blocking
+    // (dropped if no host), so the firmware always boots and runs regardless.
+    Serial.setTxTimeoutMs(0);
+#endif
+    delay(400);   // give the USB host a moment to enumerate the CDC port
 }
 
 void logf(const char* fmt, ...) {

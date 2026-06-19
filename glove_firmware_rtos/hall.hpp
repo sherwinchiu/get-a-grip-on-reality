@@ -18,7 +18,10 @@
 
 #define NUM_HALL_ROWS            5   // 5 fingers
 #define HALL_SENSORS_PER_FINGER  3   // 2 bend + 1 splay
-#define NUM_SAMPLES_AVG          32  // software averaging filter depth
+#define NUM_SAMPLES_AVG          8   // software averaging depth. Kept low so hallTask hits
+                                     // its full ~60 Hz (low latency); the web-side low-pass
+                                     // filter removes the remaining jitter. Raise toward 16/32
+                                     // for smoother-but-slower on-device readings.
 #define IGNORE_SPLAY_FINGER      1   // index finger has no splay sensor wired
 
 // Hardware setup. Call once from setup().

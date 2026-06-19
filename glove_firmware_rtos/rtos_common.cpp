@@ -9,7 +9,6 @@ QueueHandle_t      servoQueue    = nullptr;
 QueueHandle_t      sensorMailbox = nullptr;
 QueueHandle_t      imuMailbox    = nullptr;
 SemaphoreHandle_t  serialMutex   = nullptr;
-SemaphoreHandle_t  i2cMutex      = nullptr;
 EventGroupHandle_t bleEvents     = nullptr;
 
 volatile uint8_t   g_batteryPercent = 0;
@@ -37,14 +36,13 @@ void rtos_init(void) {
     // task holds it and supports priority inheritance to avoid priority
     // inversion -- a nice talking point for an interview).
     serialMutex = xSemaphoreCreateMutex();
-    i2cMutex    = xSemaphoreCreateMutex();
 
     // Event group starts with all bits clear (i.e. "not connected").
     bleEvents = xEventGroupCreate();
 
     // Defensive check: if the heap was too full to allocate any of these, fail
     // loudly rather than dereferencing a null handle later.
-    if (!servoQueue || !sensorMailbox || !imuMailbox || !serialMutex || !i2cMutex || !bleEvents) {
+    if (!servoQueue || !sensorMailbox || !imuMailbox || !serialMutex || !bleEvents) {
         Serial.println("FATAL: failed to create RTOS objects (out of heap?)");
         while (true) { delay(1000); }   // halt; watchdog/visibility
     }

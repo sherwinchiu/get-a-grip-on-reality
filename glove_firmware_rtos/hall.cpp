@@ -13,14 +13,31 @@
 
 // -----------------------------------------------------------------------------
 //  Pin maps + calibration tables (identical to the original firmware).
-//  segment 0, segment 1, splay
+//  segment 0 (base), segment 1 (knuckle), splay
+//
+//  ⚠⚠ CRITICAL ADC2-vs-BLE HAZARD ⚠⚠
+//  On the ESP32-S3, ADC1 = GPIO1..10 and ADC2 = GPIO11..20. **ADC2 cannot be read
+//  reliably while the radio (BLE/Wi-Fi) is on** -- analogRead() on an ADC2 pin
+//  returns garbage / stuck-high once BLE is initialised (documented:
+//  espressif/arduino-esp32 #3208). Calibration works because it runs BEFORE
+//  initBluetooth(); during normal streaming those channels are JUNK.
+//
+//  Which of THESE pins are ADC2 (broken once BLE is up):
+//     thumb  {4,5,6}    -> all ADC1   OK
+//     index  {7,15,16}  -> 7 ADC1 ok; 15,16 ADC2 BAD (base ok, so index curl tracks)
+//     middle {17,18,8}  -> 17,18 ADC2 BAD; 8 ADC1 ok   (both bend sensors junk)
+//     ring   {11,12,13} -> ALL ADC2 BAD                (reads "fully bent" -> false grab!)
+//     pinky  {3,9,10}   -> all ADC1   OK
+//  FIX = hardware: move the ADC2 sensors onto free ADC1 pins (only GPIO1/GPIO2 are
+//  free here, so most need an external I2C ADC e.g. ADS1115), OR accept that
+//  middle/ring bend is unreliable while connected. This is NOT fixable in software.
 // -----------------------------------------------------------------------------
 #ifdef RIGHT_HAND
-const static int hall_pins[NUM_HALL_ROWS][HALL_SENSORS_PER_FINGER] = { {  4,  5,  6 }, // thumb
-                                                                       {  7, 15, 16 }, // index
-                                                                       { 17, 18,  8 }, // middle
-                                                                       { 11, 12, 13 }, // ring
-                                                                       {  3,  9, 10 } };// pinky
+const static int hall_pins[NUM_HALL_ROWS][HALL_SENSORS_PER_FINGER] = { {  4,  5,  6 }, // thumb  ADC1/ADC1/ADC1
+                                                                       {  7, 15, 16 }, // index  ADC1/ADC2/ADC2
+                                                                       { 17, 18,  8 }, // middle ADC2/ADC2/ADC1
+                                                                       { 11, 12, 13 }, // ring   ADC2/ADC2/ADC2  <-- all bad w/ BLE
+                                                                       {  3,  9, 10 } };// pinky  ADC1/ADC1/ADC1
 #elif defined(LEFT_HAND)
 const static int hall_pins[NUM_HALL_ROWS][HALL_SENSORS_PER_FINGER] = { {  3,  9, 10 },
                                                                        { 11, 12, 13 },
@@ -54,6 +71,10 @@ uint16_t max_hall_value[NUM_HALL_ROWS][HALL_SENSORS_PER_FINGER] = { { 1150, 2660
 // Only the hall task writes this, and it copies the result into a packet before
 // publishing, so no extra locking is needed on it.
 static unsigned short hall[NUM_HALL_ROWS][HALL_SENSORS_PER_FINGER];
+
+// NVS namespace for persisted calibration (<=15 chars). Defined up here so the
+// calibration routine can also read the PREVIOUS saved ranges to merge with.
+static const char* CAL_NS = "hallcal";
 
 void init_hall(void) {
     for (uint8_t i = 0; i < NUM_HALL_ROWS; ++i)
@@ -98,8 +119,11 @@ void read_hall(void) {
 }
 
 void hall_calibrate(uint32_t duration_ms) {
-    logf("[CAL] Open, then SLOWLY close your hand to calibrate (%lu s)...\n",
-         (unsigned long)(duration_ms / 1000));
+    logf("\n========================================================\n");
+    logf("[CAL] >>> CALIBRATION START (%lu s) <<<\n", (unsigned long)(duration_ms / 1000));
+    logf("[CAL] FULLY OPEN your hand, then SLOWLY close it, then open again.\n");
+    logf("[CAL] Move every finger through its full range during this window.\n");
+    logf("========================================================\n");
 
     // Reset bounds to the OPPOSITE extremes so the open/close motion fills in the
     // true min and max actually seen this session.
@@ -115,6 +139,7 @@ void hall_calibrate(uint32_t duration_ms) {
 
     uint16_t raw[NUM_HALL_ROWS][HALL_SENSORS_PER_FINGER];
     uint32_t start = millis();
+    int lastShown = -1;
     while (millis() - start < duration_ms) {
         read_hall_raw(raw);
         for (uint8_t i = 0; i < NUM_HALL_ROWS; ++i)
@@ -122,22 +147,59 @@ void hall_calibrate(uint32_t duration_ms) {
                 if (raw[i][j] < min_hall_value[i][j]) min_hall_value[i][j] = raw[i][j];
                 if (raw[i][j] > max_hall_value[i][j]) max_hall_value[i][j] = raw[i][j];
             }
+        // Once-per-second countdown so you can see calibration is alive + timed.
+        int remain = (int)((duration_ms - (millis() - start) + 999) / 1000);
+        if (remain != lastShown) {
+            logf("[CAL]  ...%d s left\n", remain);
+            lastShown = remain;
+        }
         vTaskDelay(pdMS_TO_TICKS(5));   // ~yield to other tasks while sampling
     }
 
-    // Safety: a sensor that never moved (unplugged, or held still) leaves
-    // min == max, which would divide-by-zero inside map(). Force a 1-count span.
+    // MERGE WITH THE PREVIOUS SAVED CALIBRATION so the stored range only ever
+    // GROWS. For each sensor keep the LOWER of (this session's min, last saved
+    // min) and the HIGHER of (this session's max, last saved max) -- i.e. the
+    // widest range ever seen. This way a better/larger previous calibration is
+    // never discarded just because this session's hand motion was smaller, and
+    // it also rescues any sensor that didn't move this time.
+    {
+        Preferences p;
+        p.begin(CAL_NS, /*readOnly=*/true);
+        if (p.getBool("valid", false)) {
+            uint16_t prevMin[NUM_HALL_ROWS][HALL_SENSORS_PER_FINGER];
+            uint16_t prevMax[NUM_HALL_ROWS][HALL_SENSORS_PER_FINGER];
+            p.getBytes("min", prevMin, sizeof(prevMin));
+            p.getBytes("max", prevMax, sizeof(prevMax));
+            for (uint8_t i = 0; i < NUM_HALL_ROWS; ++i)
+                for (uint8_t j = 0; j < HALL_SENSORS_PER_FINGER; ++j) {
+                    if (prevMin[i][j] < min_hall_value[i][j]) min_hall_value[i][j] = prevMin[i][j];
+                    if (prevMax[i][j] > max_hall_value[i][j]) max_hall_value[i][j] = prevMax[i][j];
+                }
+            logf("[CAL] merged with previous saved calibration (kept widest range)\n");
+        } else {
+            logf("[CAL] no previous calibration to merge -- using this session only\n");
+        }
+        p.end();
+    }
+
+    // Safety: a sensor that never moved (unplugged, or held still) AND had no
+    // previous range leaves min == max, which would divide-by-zero inside map().
+    // Force a 1-count span.
     for (uint8_t i = 0; i < NUM_HALL_ROWS; ++i)
         for (uint8_t j = 0; j < HALL_SENSORS_PER_FINGER; ++j)
             if (max_hall_value[i][j] <= min_hall_value[i][j])
                 max_hall_value[i][j] = min_hall_value[i][j] + 1;
 
-    logf("[CAL] done -- captured min/max (raw ADC) per finger:\n");
+    static const char* fname[NUM_HALL_ROWS] = { "thumb", "index", "middl", "ring ", "pinky" };
+    logf("\n========================================================\n");
+    logf("[CAL] >>> CALIBRATION END -- captured config (raw ADC) <<<\n");
+    logf("[CAL]        base[min-max]  knuckle[min-max]  splay[min-max]\n");
     for (uint8_t i = 0; i < NUM_HALL_ROWS; ++i)
-        logf("  f%u: base[%u-%u] knuckle[%u-%u] splay[%u-%u]\n", i,
+        logf("[CAL] %s base[%4u-%4u] knuckle[%4u-%4u] splay[%4u-%4u]\n", fname[i],
              min_hall_value[i][0], max_hall_value[i][0],
              min_hall_value[i][1], max_hall_value[i][1],
              min_hall_value[i][2], max_hall_value[i][2]);
+    logf("========================================================\n\n");
 
     hall_save_calibration();   // persist so it survives the next reboot
 }
@@ -149,8 +211,8 @@ void hall_calibrate(uint32_t duration_ms) {
 //  survives reflashing of the app (unless you erase flash). We save the two
 //  uint16_t[5][3] tables plus a "valid" marker; on boot we load them back if the
 //  marker is set, otherwise the built-in defaults in this file stand.
+//  (CAL_NS is defined near the top of this file so hall_calibrate() can use it.)
 // -----------------------------------------------------------------------------
-static const char* CAL_NS = "hallcal";   // NVS namespace (<=15 chars)
 
 void hall_save_calibration(void) {
     Preferences p;
@@ -238,14 +300,27 @@ void plot_hall(void) {
 void hallTask(void* pvParameters) {
     InputData pkg;
 
+    // Brief startup delay: creating this (higher-priority) task preempts setup()
+    // immediately. Yielding here first lets setup() finish creating ALL tasks and
+    // print its [BOOT] lines before we start sampling -- so a problem in the first
+    // read is diagnosable (you'll have seen the other tasks come up) instead of
+    // silently freezing boot.
+    vTaskDelay(pdMS_TO_TICKS(300));
+    logf("[hall] task running; high-water=%u words\n",
+         (unsigned)uxTaskGetStackHighWaterMark(nullptr));
+
     // vTaskDelayUntil needs a reference "last wake time". We seed it with the
     // current tick count, then it advances by exactly one period each loop.
     TickType_t lastWake = xTaskGetTickCount();
     const TickType_t period = pdMS_TO_TICKS(HALL_PERIOD_MS);
 
+    bool firstPass = true;
     for (;;) {
         read_hall();              // sample + filter the sensors
+        if (firstPass) logf("[hall] first read_hall() OK (high-water=%u words)\n",
+                            (unsigned)uxTaskGetStackHighWaterMark(nullptr));
         build_package(&pkg);      // pack into a BLE-ready struct
+        if (firstPass) { logf("[hall] first build_package() OK -- streaming now\n"); firstPass = false; }
         plot_hall();              // stream to Serial Plotter (no-op unless PLOT_HALL)
 
         // Publish the latest snapshot. xQueueOverwrite ALWAYS succeeds on a

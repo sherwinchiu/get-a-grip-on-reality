@@ -95,9 +95,9 @@ SelfTestSummary run_selftest(bool imuOk, bool chgOk) {
     report("[POST] SERVO : sweeping each finger -- WATCH THE GLOVE\n");
     for (int i = 0; i < NUM_SERVO_ROWS; ++i) {
         report("[POST] SERVO : finger %d (%s)...\n", i, fname[i]);
-        servos[i].write(0);    vTaskDelay(pdMS_TO_TICKS(250));
-        servos[i].write(60);   vTaskDelay(pdMS_TO_TICKS(400));   // flex
-        servos[i].write(0);    vTaskDelay(pdMS_TO_TICKS(250));   // relax
+        servo_write(i, 0);     vTaskDelay(pdMS_TO_TICKS(250));
+        servo_write(i, 60);    vTaskDelay(pdMS_TO_TICKS(400));   // flex
+        servo_write(i, 0);     vTaskDelay(pdMS_TO_TICKS(250));   // relax
     }
     report("[POST] SERVO : sweep done (confirm all 5 moved)  OK*\n");
     s.passed++;   // counted as pass if it ran; the * means "human-confirmed"

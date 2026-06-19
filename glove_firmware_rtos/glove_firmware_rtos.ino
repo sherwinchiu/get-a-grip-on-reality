@@ -47,11 +47,47 @@ static TaskHandle_t hBle   = nullptr;
 static TaskHandle_t hServo = nullptr;
 static TaskHandle_t hImu   = nullptr;
 static TaskHandle_t hChg   = nullptr;
+static TaskHandle_t hBlink = nullptr;
+
+// -----------------------------------------------------------------------------
+//  blinkTask : a 1 Hz heartbeat on the GPIO21 LED — a visible "firmware is alive"
+//  sign. It runs at the LOWEST priority (0 = idle level) and spends ~all its time
+//  blocked in vTaskDelay, so it costs essentially nothing and never competes with
+//  the real-time sensor/BLE work. A clean little example of a background task.
+// -----------------------------------------------------------------------------
+static void blinkTask(void* pvParameters) {
+    pinMode(21, OUTPUT);
+    bool on = false;
+    for (;;) {
+        // Status-encoded heartbeat you can read WITHOUT a serial monitor:
+        //   slow 1 Hz blink  -> firmware alive, NOT connected (advertising)
+        //   fast ~5 Hz blink -> a BLE client is connected (tasks are running!)
+        // So: after you connect from the phone, if this LED SPEEDS UP, the
+        // firmware sees the link and bleTask is running. If it stays slow, the
+        // connection isn't reaching our tasks. If it never blinks at all, the
+        // new firmware didn't flash / tasks aren't being created.
+        bool conn = bleConnected();
+        on = !on;
+        digitalWrite(21, on ? HIGH : LOW);
+#ifdef RGB_BUILTIN
+        // If the dev board has an addressable onboard LED, mirror the state there
+        // too (green = connected, amber = idle) for a guaranteed-visible signal.
+        rgbLedWrite(RGB_BUILTIN, on ? (conn ? 0 : 18) : 0,
+                                 on ? (conn ? 18 : 7) : 0, 0);
+#endif
+        vTaskDelay(pdMS_TO_TICKS(conn ? 100 : (on ? 120 : 880)));
+    }
+}
 
 void setup() {
     // ---- 1. Bring up logging (Serial) FIRST so early messages are visible. --
     logInit(115200);
-    logf("\n[BOOT] Glove firmware (FreeRTOS) starting\n");
+    // Unique build marker: if you DON'T see this exact line after reflashing, the
+    // new firmware did not take (old image still running) -- reflash and watch here.
+    logf("\n############################################################\n");
+    logf("# Glove firmware (FreeRTOS)  build: %s %s\n", __DATE__, __TIME__);
+    logf("# tx-diagnostics + MTU247 + 15s-calibration\n");
+    logf("############################################################\n");
 
     // ---- 2. Create the shared RTOS objects BEFORE anything can use them. -----
     //  Order matters: BLE callbacks reference servoQueue/bleEvents, and every
@@ -63,6 +99,13 @@ void setup() {
     init_servos();
     init_hall();
 
+    // Optional servo bring-up sweep (config SERVO_SWEEP_TEST): moves each servo
+    // alone so you can see which physically respond, isolating a dead servo/pin
+    // from a shared-power brownout. Runs here while single-threaded.
+#ifdef SERVO_SWEEP_TEST
+    servo_sweep_test();
+#endif
+
     // Optional open/close min-max calibration (see config.h). Runs here, while
     // we're still single-threaded in setup(), so it finishes before hallTask
     // starts publishing. No flag defined -> the hard-coded ranges are used.
@@ -73,56 +116,61 @@ void setup() {
 #endif
 
     initBluetooth();
-    // initImu() returns false (after a few retries) if the IMU isn't found, so
-    // a missing/unwired IMU never hangs boot -- the rest of the glove still runs.
+
+    // ---- 4. Create the CORE streaming tasks FIRST. --------------------------
+    //  CRITICAL ORDERING (this was a real bug): the optional IMU/charger init
+    //  below touches I2C, and an absent/wedged I2C device can make a sensor
+    //  library's begin() BLOCK. If that init runs before we create the tasks,
+    //  a hung begin() means hallTask/bleTask/blinkTask are NEVER created and the
+    //  glove never streams -- even though BLE still connects (the BLE controller
+    //  runs in its own stack task). So we create the real-time tasks NOW; then
+    //  nothing the optional peripherals do can stop sensor data from flowing.
+    //
+    //  xTaskCreatePinnedToCore(fn, "name", stackBytes, arg, priority, &handle, core)
+    //  The task runs as soon as the scheduler picks it -- there is no start() step.
+    // Per-step logging: whichever "created" line is the LAST one you see pins the
+    // exact task whose creation (or immediate first run) is stalling/crashing.
+    logf("[BOOT] initBluetooth done; creating core tasks...\n");
+    xTaskCreatePinnedToCore(hallTask,  "hall",  STACK_HALL,  nullptr, PRIO_HALL,  &hHall,  CORE_APP);
+    logf("[BOOT]  + hall created\n");
+    xTaskCreatePinnedToCore(servoTask, "servo", STACK_SERVO, nullptr, PRIO_SERVO, &hServo, CORE_APP);
+    logf("[BOOT]  + servo created\n");
+    xTaskCreatePinnedToCore(bleTask,   "ble",   STACK_BLE,   nullptr, PRIO_BLE,   &hBle,   CORE_PROTOCOL);
+    logf("[BOOT]  + ble created\n");
+    // Heartbeat LED on GPIO21 — priority 1 (just above idle) so it's guaranteed
+    // to get scheduled; tiny stack. rgbLedWrite (if used) needs a little room.
+    xTaskCreatePinnedToCore(blinkTask, "blink", 2048, nullptr, 1, &hBlink, CORE_APP);
+    logf("[BOOT]  + blink created\n");
+    logf("[BOOT] core tasks created (hall/servo/ble/blink). Free heap: %u bytes\n",
+         (unsigned)ESP.getFreeHeap());
+
+    // ---- 5. OPTIONAL peripherals (safe now -- core glove already running). --
+    // initImu() returns false if the IMU isn't found; bq_init() likewise. Even
+    // if one of these blocks, BLE data is already streaming.
     bool imuOk = initImu();
     g_imuPresent = imuOk;  // tells bleTask whether to append orientation (44B vs 32B)
-
-    // Configure the BQ25887 charger over I2C (shares the IMU bus). Returns false
-    // if absent, so a board without it still boots and runs everything else.
     bool chgOk = bq_init();
 
-    // ---- 3b. POWER-ON SELF-TEST (optional) ----------------------------------
-    //  Runs here while still single-threaded (no task contention on the buses):
-    //  waits for a BLE client, sweeps every subsystem through its driver, and
-    //  reports PASS/FAIL over Serial + BLE before normal operation begins.
+    // POWER-ON SELF-TEST (optional): sweeps every subsystem, reports over BLE.
 #ifdef RUN_SELFTEST_ON_BOOT
     run_selftest(imuOk, chgOk);
 #endif
 
-    // ---- 4. Create the tasks. -----------------------------------------------
-    //  xTaskCreatePinnedToCore(
-    //      taskFunction,        // the void(void*) entry point
-    //      "name",              // human-readable name (shows in debug tools)
-    //      stackBytes,          // private stack size (BYTES on ESP32)
-    //      pvParameters,        // arg passed to the task (we don't need one)
-    //      priority,            // higher number = higher priority
-    //      &handle,             // out: handle to the created task
-    //      coreID);             // which physical core to pin it to
-    //
-    //  The task starts running as soon as it's created and the scheduler picks
-    //  it -- there is no "start()" step. (The FreeRTOS scheduler is already
-    //  running by the time Arduino calls setup().)
-
-    xTaskCreatePinnedToCore(hallTask,  "hall",  STACK_HALL,  nullptr, PRIO_HALL,  &hHall,  CORE_APP);
-    xTaskCreatePinnedToCore(servoTask, "servo", STACK_SERVO, nullptr, PRIO_SERVO, &hServo, CORE_APP);
-    xTaskCreatePinnedToCore(bleTask,   "ble",   STACK_BLE,   nullptr, PRIO_BLE,   &hBle,   CORE_PROTOCOL);
-
-    // Only spin up the IMU fusion task if the sensor actually responded.
+    // Spin up the IMU fusion task only if the sensor responded.
     if (imuOk) {
         xTaskCreatePinnedToCore(imuTask, "imu", STACK_IMU, nullptr, PRIO_IMU, &hImu, CORE_APP);
     } else {
         logf("[BOOT] IMU absent -> skipping fusion task (orientation stays 0)\n");
     }
 
-    // Only spin up the charger monitor if the BQ25887 responded.
+    // Spin up the charger monitor only if the BQ25887 responded.
     if (chgOk) {
         xTaskCreatePinnedToCore(chargerTask, "chg", STACK_CHARGER, nullptr, PRIO_CHARGER, &hChg, CORE_APP);
     } else {
         logf("[BOOT] charger absent -> skipping charger task (battery_lvl stays 0)\n");
     }
 
-    logf("[BOOT] tasks created. Free heap: %u bytes\n", (unsigned)ESP.getFreeHeap());
+    logf("[BOOT] setup() complete -- entering loop()\n");
 
     // setup() returns and Arduino's loopTask keeps calling loop() below. We
     // repurpose loop() as a low-priority health monitor.

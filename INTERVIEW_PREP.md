@@ -42,7 +42,7 @@ match, so the three can't drift apart.
 | Service | `7241bbc8-8ed8-4729-85ea-0ffc63248b4f` |
 | Notify (sensors, glove→host) | `34797cc3-9e74-42e1-a669-be3cbdbae64d` |
 | Write (force, host→glove) | `36ade52d-4a4c-4b23-9d64-78e6a3e2cdd4` |
-| Device name | `FYDPGloveRight` |
+| Device name | `GloveRight` |
 
 **Sensor packet (32 B, little-endian):** `[0]` battery · `[1–20]` bend (5 fingers × 2 joints
 × uint16, 0–4095) · `[21–28]` splay (4 × uint16) · `[29]` button · `[30–31]` joystick. With
@@ -125,7 +125,7 @@ arduino-cli compile --fqbn esp32:esp32:esp32s3 --libraries <Arduino/libraries> g
 
 # Firmware logic tests (g++):        cd glove_firmware_rtos/test && ./run_tests.sh      # 37 checks
 # Web demo protocol tests (Node):    cd mobile-demo && node --test                      # 22 checks
-# Web demo, no hardware needed:      cd mobile-demo && python3 -m http.server 8000      # Simulation Mode
+# Web demo (serve, then connect the glove):  cd mobile-demo && python3 -m http.server 8000
 ```
 
 ---
@@ -136,5 +136,5 @@ arduino-cli compile --fqbn esp32:esp32:esp32s3 --libraries <Arduino/libraries> g
   *engage* byte directly as the servo angle and ignores the force byte — noted in the code.
 - Splay: only the thumb carries a real value on the current hardware; the rest are centred.
 - Battery % is a linear voltage estimate, not a coulomb-counting fuel gauge.
-- Unit tests cover logic, not the live radio/WebGL/servo path — Simulation Mode is the
-  always-works fallback for the demo.
+- Unit tests cover logic, not the live radio/WebGL/servo path — that's verified on a bench
+  with the real glove.

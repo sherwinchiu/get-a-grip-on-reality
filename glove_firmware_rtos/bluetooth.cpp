@@ -33,6 +33,7 @@ static BLECharacteristic* pRxCharacteristic = nullptr;  // host WRITES haptics h
 // -----------------------------------------------------------------------------
 void ServerCallback::onConnect(BLEServer* /*pServer*/) {
     xEventGroupSetBits(bleEvents, BLE_CONNECTED_BIT);
+    logf("[BLE] onConnect\n");
 }
 
 void ServerCallback::onDisconnect(BLEServer* /*pServer*/) {
@@ -54,9 +55,12 @@ class RxCallbacks : public BLECharacteristicCallbacks {
         if (rxValue.length() == 0) return;
 
         ServoCommand cmd = {{0, 0, 0, 0, 0}};
-        // Two bytes per servo in the incoming buffer; map 0..255 -> 0..180 deg.
+        // One byte per finger (the host sends 0 = not touching, 255 = touching).
+        // BINARY haptics: any finger over the threshold -> drive its servo to the
+        // ENGAGED angle and hold (stall torque); otherwise RELAXED. No gradient.
         for (int i = 0; i + 1 < (int)rxValue.length() && (i / 2) < NUM_SERVO_ROWS; i += 2) {
-            cmd.pos[i / 2] = map((uint8_t)rxValue[i], 0, 255, 0, 180);
+            bool touching = (uint8_t)rxValue[i] >= SERVO_ENGAGE_THRESH;
+            cmd.pos[i / 2] = touching ? SERVO_ENGAGED_DEG : SERVO_RELAXED_DEG;
         }
 
         // Hand the command off to the servo task. Timeout 0 == "don't block":
@@ -67,7 +71,18 @@ class RxCallbacks : public BLECharacteristicCallbacks {
 };
 
 void initBluetooth(void) {
-    BLEDevice::init("FYDPGloveRight");
+#ifdef LEFT_HAND
+    BLEDevice::init("GloveLeft");
+#else
+    BLEDevice::init("GloveRight");
+#endif
+
+    // Prefer a large ATT MTU. Our notify packet is 32 bytes (44 with IMU), but the
+    // DEFAULT MTU is only 23 -> max notify payload 20 bytes, which would TRUNCATE
+    // our packet and the host would silently reject it as "too short". The central
+    // (phone) drives the actual MTU exchange, but advertising a large local MTU
+    // lets it negotiate up. Android Chrome auto-requests 247; this keeps us ready.
+    BLEDevice::setMTU(247);
 
     pServer = BLEDevice::createServer();
     pServer->setCallbacks(new ServerCallback());
@@ -80,9 +95,12 @@ void initBluetooth(void) {
         CHARACTERISTIC_UUID_TX, BLECharacteristic::PROPERTY_NOTIFY);
     pTxCharacteristic->addDescriptor(new BLE2902());
 
-    // RX: WRITE characteristic, wired to our deferring callback above.
+    // RX: WRITE characteristic. We allow BOTH write-with-response and
+    // write-WITHOUT-response: the web app uses the no-response form for haptics so
+    // each force update skips the ACK round-trip -> noticeably lower latency / snappier.
     pRxCharacteristic = pService->createCharacteristic(
-        CHARACTERISTIC_UUID_RX, BLECharacteristic::PROPERTY_WRITE);
+        CHARACTERISTIC_UUID_RX,
+        BLECharacteristic::PROPERTY_WRITE | BLECharacteristic::PROPERTY_WRITE_NR);
     pRxCharacteristic->setCallbacks(new RxCallbacks());
     pRxCharacteristic->addDescriptor(new BLE2902());
 
@@ -96,7 +114,7 @@ void initBluetooth(void) {
     pAdvertising->setMaxPreferred(0x06);
     BLEDevice::startAdvertising();
 
-    logf("[BLE] Advertising as FYDPGloveRight\n");
+    logf("[BLE] Advertising\n");
 }
 
 // -----------------------------------------------------------------------------
@@ -105,7 +123,11 @@ void initBluetooth(void) {
 //  called directly on the characteristic.
 // -----------------------------------------------------------------------------
 bool bleConnected(void) {
-    return (xEventGroupGetBits(bleEvents) & BLE_CONNECTED_BIT) != 0;
+    // Primary signal: the bit our onConnect callback sets. Belt-and-suspenders:
+    // also trust the server's own live connection count, so even if the connect
+    // callback never fired/set the bit, we still detect the link and transmit.
+    if ((xEventGroupGetBits(bleEvents) & BLE_CONNECTED_BIT) != 0) return true;
+    return pServer && pServer->getConnectedCount() > 0;
 }
 
 bool bleWaitConnected(uint32_t timeout_ms) {
@@ -129,12 +151,16 @@ void bleTask(void* pvParameters) {
     bool wasConnected = false;
     const TickType_t period = pdMS_TO_TICKS(BLE_PERIOD_MS);
 
+    // Diagnostic counters so Serial proves whether we are actually transmitting:
+    //   sent  = notify() calls succeeded   miss = mailbox had no fresh packet
+    uint32_t sent = 0, miss = 0;
+    TickType_t lastReport = xTaskGetTickCount();
+
     for (;;) {
-        // Read (without clearing) the connection bit. We don't BLOCK on it here
-        // because we still need to run the reconnect/advertising logic below
-        // even while disconnected.
-        EventBits_t bits = xEventGroupGetBits(bleEvents);
-        bool connected = (bits & BLE_CONNECTED_BIT) != 0;
+        // Are we connected? bleConnected() checks BOTH the callback's event bit
+        // AND the server's live connection count, so a missed callback can't make
+        // us sit silent on an open link.
+        bool connected = bleConnected();
 
         // --- Handle a fresh DISCONNECT: kick advertising back on. ---
         if (!connected && wasConnected) {
@@ -173,7 +199,23 @@ void bleTask(void* pvParameters) {
                 }
                 pTxCharacteristic->setValue((uint8_t*)&pkg, len);
                 pTxCharacteristic->notify();
+                sent++;
+            } else {
+                miss++;
             }
+        }
+
+        // Once per second, report whether we're actually streaming. If `sent`
+        // keeps climbing the firmware IS notifying -> any "no data" problem is on
+        // the host/web side. If `miss` climbs instead, the hall mailbox is empty
+        // (hallTask stalled). If neither moves, we're not reaching this branch
+        // (not connected).
+        if (xTaskGetTickCount() - lastReport >= pdMS_TO_TICKS(1000)) {
+            logf("[BLE] tx: sent=%lu miss=%lu connected=%d\n",
+                 (unsigned long)sent, (unsigned long)miss, (int)(wasConnected ? 1 : 0));
+            sent = 0;
+            miss = 0;
+            lastReport = xTaskGetTickCount();
         }
 
         // Sleep ~30 ms; cheap fixed-rate loop. (vTaskDelay is fine here -- a few

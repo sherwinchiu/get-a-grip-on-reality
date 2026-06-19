@@ -71,16 +71,9 @@ extern QueueHandle_t imuMailbox;
 // -----------------------------------------------------------------------------
 extern SemaphoreHandle_t serialMutex;
 
-// -----------------------------------------------------------------------------
-//  MUTEX : i2cMutex  (protects the shared I2C / Wire bus)
-// -----------------------------------------------------------------------------
-//  The IMU (imuTask, 100 Hz) and the BQ25887 charger (chargerTask, 1 Hz) sit on
-//  the SAME I2C bus. The Arduino Wire driver is NOT safe to call from two tasks
-//  at once -- overlapping transactions corrupt each other or hang the bus. Every
-//  task takes this mutex around its Wire access so only one talks at a time.
-//  (Exactly the same idea as serialMutex, but for I2C instead of the UART.)
-// -----------------------------------------------------------------------------
-extern SemaphoreHandle_t i2cMutex;
+// (No i2cMutex: there is no I2C bus in the current build -- the IMU is wired for
+//  SPI and the charger is not present. Re-add one here only if an I2C peripheral
+//  shared between two tasks is introduced.)
 
 // Latest battery charge estimate (0..100), written by chargerTask and read by
 // the hall packet builder so it rides along in InputData.battery_lvl. A single

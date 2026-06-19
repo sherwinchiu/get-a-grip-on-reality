@@ -19,7 +19,7 @@ export const clamp01 = (v) => clamp(v, 0, 1);
 
 /* ---- BLE GATT contract (must match the firmware's bluetooth.hpp exactly) ---- */
 export const GATT = {
-  deviceNamePrefix: 'FYDPGlove',                          // advertised name (FYDPGloveRight)
+  deviceNamePrefix: 'Glove',                              // advertised name (GloveRight / GloveLeft)
   service: '7241bbc8-8ed8-4729-85ea-0ffc63248b4f',        // custom service
   notify:  '34797cc3-9e74-42e1-a669-be3cbdbae64d',        // glove -> app sensor stream (NOTIFY)
   write:   '36ade52d-4a4c-4b23-9d64-78e6a3e2cdd4',        // app -> glove force commands (WRITE)
@@ -27,7 +27,7 @@ export const GATT = {
 
 /* ---- Per-object force profiles. engage/force are 0..1 (scaled to 0..255). ---- */
 export const FORCE_PROFILES = {
-  ball:  { label: 'Ball',  engage: 0.45, force: 0.60, color: 0x9bff1a },  // soft, mid-curl
+  ball:  { label: 'Ball',  engage: 0.40, force: 0.72, color: 0x9bff1a },  // firm-ish, engages mid-curl
   cube:  { label: 'Cube',  engage: 0.20, force: 0.95, color: 0xff8a1e },  // firm, engages early
   mouse: { label: 'Mouse', engage: 0.55, force: 0.30, color: 0x34e2e2 },  // light
 };
@@ -125,6 +125,20 @@ export function buildForcePacket(profile) {
 }
 
 export const ZERO_FORCE = new Uint8Array(FORCE_BYTES);   // release: relax all servos
+
+/* ----------------------------------------------------------------------------
+   buildForcePacketPerFinger(forces)  ──  per-finger force, forces[f] in 0..1
+   (thumb..pinky). Each finger gets its OWN byte, so a finger only resists when
+   *it* is actually touching the object (collision-driven, not a global grasp).
+   -------------------------------------------------------------------------- */
+export function buildForcePacketPerFinger(forces) {
+  const a = new Uint8Array(FORCE_BYTES);
+  for (let f = 0; f < 5; f++) {
+    const v = Math.round(clamp01(forces[f] || 0) * 255);
+    a[f * 2] = v; a[f * 2 + 1] = v;
+  }
+  return a;
+}
 
 /* ----------------------------------------------------------------------------
    graspPoseMet(state)  ──  is the hand in a grabbing pose? (object-agnostic)

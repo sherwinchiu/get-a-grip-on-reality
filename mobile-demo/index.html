@@ -3,231 +3,442 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-<title>Haptic Glove · Telemetry Console</title>
+<title>force feedback glove</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='15' fill='%234a8c3f'/%3E%3Ctext x='16' y='23' font-size='20' text-anchor='middle' fill='%23faf8f4' font-family='Georgia,serif'%3Eg%3C/text%3E%3C/svg%3E" />
 
-<!-- Distinctive type: Chakra Petch (squared industrial display) + IBM Plex Mono (instrument data) -->
+<!-- Totuki type system: DM Serif Display (headings), DM Sans (body), JetBrains Mono (labels) -->
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-<link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,400;0,500;0,600;0,700&family=DM+Serif+Display&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
 
 <style>
 /* ============================================================================
-   AESTHETIC: dark "lab instrument / telemetry console".
-   Blueprint grid, monospace readouts, lime = live sensor, amber = force,
-   red = grab, cyan = link-up. HUD corner ticks on every panel.
+   AESTHETIC — matches ../totuki-website: warm beige canvas, forest-green
+   accents, soft rounded cards, mono micro-labels, a faint noise grain.
    ========================================================================== */
 :root{
-  --bg:#06080b; --bg2:#0a0e13; --panel:#0c1117; --panel-2:#0f161d;
-  --line:#1a2630; --line-hi:#2b3f4d;
-  --ink:#c9d6df; --ink-dim:#5f7585; --ink-faint:#3a4a57;
-  --lime:#9bff1a; --amber:#ff8a1e; --red:#ff3344; --cyan:#34e2e2;
-  --mono:'IBM Plex Mono', ui-monospace, monospace;
-  --disp:'Chakra Petch', var(--mono);
+  --beige-50:#faf8f4; --beige-100:#f0ebe3; --beige-200:#e6dfd5; --beige-300:#d6cdbf; --beige-400:#b8ad9e;
+  --green-50:#f2faf0; --green-100:#dff0db; --green-200:#b8dbb0; --green-400:#74b568;
+  --green-500:#5a9e4d; --green-600:#4a8c3f; --green-700:#3d7a35; --green-800:#305f2a; --green-900:#1e3d1a;
+  --bark:#2a2318;
+  --amber:#c98a3a;   /* force feedback */
+  --clay:#c0563f;    /* grab / alert */
+  --display:'DM Serif Display', serif;
+  --body:'DM Sans', sans-serif;
+  --mono:'JetBrains Mono', monospace;
 }
 *{box-sizing:border-box;margin:0;padding:0}
-html,body{height:100%}
+html,body{height:100%;max-width:100%;overflow-x:hidden}   /* no horizontal scroll, ever */
 body{
-  font-family:var(--mono);
-  color:var(--ink);
+  font-family:var(--body);
+  color:var(--bark);
   background:
-    radial-gradient(120% 90% at 50% -10%, #0d141b 0%, var(--bg) 60%),
-    var(--bg);
-  overflow:hidden;
+    radial-gradient(60% 50% at 80% 0%, rgba(116,181,104,.10), transparent 70%),
+    radial-gradient(50% 50% at 10% 100%, rgba(74,140,63,.07), transparent 70%),
+    var(--beige-100);
   -webkit-font-smoothing:antialiased;
+  overflow:hidden;
 }
-/* faint blueprint grid + scanlines over the whole app */
-body::before{
-  content:"";position:fixed;inset:0;pointer-events:none;z-index:0;
-  background-image:
-    linear-gradient(var(--line) 1px, transparent 1px),
-    linear-gradient(90deg, var(--line) 1px, transparent 1px);
-  background-size:44px 44px;
-  -webkit-mask-image:radial-gradient(110% 80% at 50% 30%, #000 30%, transparent 90%);
-          mask-image:radial-gradient(110% 80% at 50% 30%, #000 30%, transparent 90%);
-  opacity:.35;
-}
+/* noise grain overlay (same technique as totuki) */
 body::after{
-  content:"";position:fixed;inset:0;pointer-events:none;z-index:60;
-  background:repeating-linear-gradient(0deg, rgba(0,0,0,0) 0 2px, rgba(0,0,0,.18) 2px 3px);
-  mix-blend-mode:overlay;opacity:.5;
+  content:'';position:fixed;inset:0;z-index:9999;pointer-events:none;opacity:.03;
+  background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-size:256px 256px;
 }
+::selection{background:var(--green-200);color:var(--green-900)}
+:focus-visible{outline:2px solid var(--green-600);outline-offset:2px;border-radius:6px}
 
-/* ---- HUD top bar ---- */
-.hud-bar{
+/* ---- header ---- */
+.bar{
   position:relative;z-index:10;display:flex;align-items:center;justify-content:space-between;
-  gap:14px;padding:12px 18px;border-bottom:1px solid var(--line);
-  background:linear-gradient(180deg, rgba(13,19,26,.9), rgba(8,11,15,.7));
-  backdrop-filter:blur(6px);
+  gap:16px;height:68px;padding:0 24px;
 }
-.brand{display:flex;align-items:center;gap:12px;font-family:var(--disp);letter-spacing:.16em;
-  font-weight:700;text-transform:uppercase;font-size:14px}
-.brand .glyph{color:var(--lime);font-size:18px;text-shadow:0 0 14px var(--lime)}
-.brand .sub{color:var(--ink-dim);font-weight:500;letter-spacing:.22em;font-size:11px}
-.bar-right{display:flex;align-items:center;gap:10px;flex-wrap:wrap;justify-content:flex-end}
+.brand{display:flex;align-items:baseline;gap:12px;min-width:0;flex-shrink:1;overflow:hidden}
+.brand .word{font-family:var(--display);font-size:22px;color:var(--green-600);line-height:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.brand .tag{font-family:var(--mono);font-size:10px;letter-spacing:.28em;color:rgba(61,122,53,.55);white-space:nowrap}
+.bar-right{display:flex;align-items:center;gap:12px;flex-shrink:0}   /* never clip the controls */
 
-.readout{font-size:11px;color:var(--ink-dim);letter-spacing:.1em;border:1px solid var(--line);
-  padding:7px 10px;border-radius:2px;background:var(--panel);white-space:nowrap}
-.readout b{color:var(--lime);font-weight:600}
+.pill{display:flex;align-items:center;gap:8px;font-family:var(--mono);font-size:11px;letter-spacing:.12em;
+  padding:8px 14px;border-radius:999px;border:1px solid var(--beige-300);
+  background:rgba(255,255,255,.6);color:rgba(42,35,24,.6);white-space:nowrap}
+.pill .dot{width:8px;height:8px;border-radius:50%;background:var(--beige-400)}
+.pill.live .dot{background:var(--green-500);box-shadow:0 0 0 4px rgba(90,158,77,.18);animation:breathe 1.8s infinite}
+.pill.busy .dot{background:var(--amber);box-shadow:0 0 0 4px rgba(201,138,58,.18);animation:breathe 1.4s infinite}
+.pill.err  .dot{background:var(--clay)}
+@keyframes breathe{0%,100%{opacity:1}50%{opacity:.4}}
 
-.status{display:flex;align-items:center;gap:8px;font-size:11px;letter-spacing:.16em;
-  border:1px solid var(--line);padding:7px 11px;border-radius:2px;background:var(--panel);text-transform:uppercase}
-.status .dot{width:9px;height:9px;border-radius:50%;background:var(--ink-faint);box-shadow:0 0 0 0 transparent}
-.status.is-sim .dot{background:var(--amber);box-shadow:0 0 12px var(--amber);animation:pulse 1.6s infinite}
-.status.is-link .dot{background:var(--cyan);box-shadow:0 0 12px var(--cyan)}
-.status.is-conn .dot{background:var(--lime);box-shadow:0 0 12px var(--lime);animation:pulse 1.6s infinite}
-.status.is-err  .dot{background:var(--red);box-shadow:0 0 12px var(--red)}
-@keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
-
-/* ---- buttons ---- */
-.btn{font-family:var(--disp);font-weight:600;text-transform:uppercase;letter-spacing:.12em;
-  font-size:12px;color:var(--ink);background:var(--panel);border:1px solid var(--line-hi);
-  padding:9px 14px;border-radius:2px;cursor:pointer;transition:.15s ease;position:relative;white-space:nowrap}
-.btn:hover{border-color:var(--lime);color:#fff;box-shadow:0 0 0 1px var(--lime) inset, 0 0 18px rgba(155,255,26,.18)}
-.btn:active{transform:translateY(1px)}
-.btn[disabled]{opacity:.4;cursor:not-allowed;filter:grayscale(.6)}
-.btn-primary{background:linear-gradient(180deg, rgba(155,255,26,.16), rgba(155,255,26,.04));
-  border-color:var(--lime);color:#dfffae;text-shadow:0 0 10px rgba(155,255,26,.4)}
-.btn-primary:hover{box-shadow:0 0 22px rgba(155,255,26,.35), 0 0 0 1px var(--lime) inset}
-.btn-ghost{background:transparent}
+.btn{font-family:var(--body);font-weight:600;font-size:13px;letter-spacing:.06em;
+  border-radius:999px;padding:11px 22px;cursor:pointer;border:2px solid transparent;transition:all .3s cubic-bezier(.22,1,.36,1);white-space:nowrap}
+.btn-primary{background:var(--green-600);color:#fff}
+.btn-primary:hover{background:var(--green-700);transform:translateY(-2px);box-shadow:0 8px 30px rgba(74,140,63,.35)}
+.btn-primary[disabled]{opacity:.5;cursor:default;transform:none;box-shadow:none}
+.btn-ghost{background:transparent;border-color:rgba(74,140,63,.3);color:var(--green-700)}
+.btn-ghost:hover{border-color:var(--green-600);background:rgba(74,140,63,.06);transform:translateY(-2px)}
 
 /* ---- layout ---- */
-main{position:relative;z-index:5;display:flex;height:calc(100% - 53px);overflow:hidden}
-.stage{position:relative;flex:1 1 auto;min-width:0}
+main{position:relative;z-index:5;display:flex;gap:18px;height:calc(100% - 68px);padding:0 24px 24px}
+.stage{position:relative;flex:1 1 auto;min-width:0;border-radius:24px;overflow:hidden;
+  background:linear-gradient(180deg, var(--beige-50), var(--beige-200));
+  border:1px solid rgba(214,205,191,.7);box-shadow:inset 0 1px 0 rgba(255,255,255,.6)}
 #three{display:block;width:100%;height:100%}
-.stage-tag{position:absolute;font-size:10px;letter-spacing:.22em;color:var(--ink-dim);
-  text-transform:uppercase;pointer-events:none}
-.stage-tag.tl{top:14px;left:16px}
-.stage-tag.bl{bottom:14px;left:16px;color:var(--ink-faint)}
-.stage-tag b{color:var(--lime)}
+.stage-tag{position:absolute;left:20px;font-family:var(--mono);font-size:10px;letter-spacing:.22em;
+  color:rgba(42,35,24,.4);pointer-events:none}
+.stage-tag.tl{top:18px} .stage-tag.bl{bottom:16px}
+.stage-tag b{color:var(--green-600)}
 
-.grab-badge{position:absolute;top:14px;right:16px;font-family:var(--disp);font-weight:700;
-  letter-spacing:.2em;font-size:13px;color:var(--red);border:1px solid var(--red);
-  padding:7px 13px;border-radius:2px;background:rgba(255,51,68,.08);
-  box-shadow:0 0 20px rgba(255,51,68,.35);opacity:0;transform:translateY(-6px);transition:.18s}
+.grab-badge{position:absolute;top:16px;right:18px;font-family:var(--body);font-weight:700;font-size:12px;
+  letter-spacing:.1em;color:#fff;background:var(--clay);padding:7px 15px;
+  border-radius:999px;box-shadow:0 8px 24px rgba(192,86,63,.35);opacity:0;transform:translateY(-6px);transition:.2s}
 .grab-badge.on{opacity:1;transform:none}
 
-/* ---- sidebar panels ---- */
-.sidebar{flex:0 0 340px;max-width:42vw;display:flex;flex-direction:column;gap:12px;
-  padding:14px;overflow-y:auto;border-left:1px solid var(--line);background:rgba(7,10,14,.55)}
-.panel{position:relative;background:linear-gradient(180deg, var(--panel), var(--panel-2));
-  border:1px solid var(--line);border-radius:3px;padding:14px 14px 16px}
-/* HUD corner ticks */
-.panel::before,.panel::after{content:"";position:absolute;width:10px;height:10px;pointer-events:none}
-.panel::before{top:-1px;left:-1px;border-top:1px solid var(--line-hi);border-left:1px solid var(--line-hi)}
-.panel::after{bottom:-1px;right:-1px;border-bottom:1px solid var(--line-hi);border-right:1px solid var(--line-hi)}
-.panel h2{font-family:var(--disp);font-size:11px;letter-spacing:.24em;text-transform:uppercase;
-  color:var(--ink-dim);margin-bottom:12px;display:flex;align-items:center;gap:8px}
-.panel h2::before{content:"";width:6px;height:6px;background:var(--lime);box-shadow:0 0 8px var(--lime)}
-.panel.force h2::before{background:var(--amber);box-shadow:0 0 8px var(--amber)}
+.reset-view{position:absolute;bottom:14px;right:16px;font-family:var(--mono);font-size:10px;
+  letter-spacing:.08em;color:rgba(42,35,24,.55);background:rgba(255,255,255,.7);
+  border:1px solid var(--beige-300);border-radius:999px;padding:7px 12px;cursor:pointer;
+  backdrop-filter:blur(6px);transition:.2s}
+.reset-view:hover{border-color:var(--green-600);color:var(--green-700)}
 
-.spawn-row{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:10px}
-.spawn-row .btn{padding:11px 6px;font-size:12px;display:flex;flex-direction:column;gap:3px;align-items:center}
-.spawn-row .btn .ico{font-size:16px}
-.btn.sel{border-color:var(--amber);color:#ffd9af;box-shadow:0 0 0 1px var(--amber) inset,0 0 16px rgba(255,138,30,.25)}
-.clear-btn{width:100%;font-size:11px;padding:8px}
+.discon{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+  text-align:center;pointer-events:none;transition:opacity .4s;padding:20px}
+.discon.hide{opacity:0}
+.discon-card{display:flex;flex-direction:column;align-items:center;gap:12px;max-width:340px;
+  padding:26px 30px;border-radius:20px;background:rgba(250,248,244,.85);backdrop-filter:blur(12px);
+  border:1px solid rgba(214,205,191,.85);box-shadow:0 22px 55px rgba(42,35,24,.16)}
+.discon-icon{width:48px;height:48px;display:flex;align-items:center;justify-content:center;border-radius:50%;
+  background:var(--green-100);color:var(--green-600);animation:breathe 2s infinite}
+.discon-card h2{font-family:var(--display);font-size:27px;color:var(--green-800);line-height:1.1}
+.discon-card p{font-size:13.5px;color:rgba(42,35,24,.55);line-height:1.6}
 
-.kv{display:flex;justify-content:space-between;font-size:12px;padding:3px 0;color:var(--ink-dim)}
-.kv b{color:var(--ink);font-weight:500}
-.kv .lime{color:var(--lime)} .kv .amber{color:var(--amber)} .kv .red{color:var(--red)}
+/* ---- sidebar cards ---- */
+.side{flex:0 0 330px;max-width:40vw;display:flex;flex-direction:column;gap:14px;overflow-y:auto;padding-bottom:4px}
+.card{position:relative;border-radius:20px;border:1px solid rgba(214,205,191,.7);
+  background:rgba(255,255,255,.7);backdrop-filter:blur(6px);padding:18px;
+  box-shadow:0 1px 0 rgba(255,255,255,.6)}
+.card::before{content:'';position:absolute;top:0;left:18px;right:18px;height:1px;
+  background:linear-gradient(90deg,transparent,rgba(74,140,63,.25),transparent)}
+.card h2{font-family:var(--mono);font-size:10px;letter-spacing:.22em;
+  color:rgba(74,140,63,.7);margin-bottom:14px;display:flex;align-items:center;gap:8px}
 
-.hex{font-size:11px;color:var(--amber);word-break:break-all;background:#080d10;
-  border:1px solid var(--line);padding:8px;border-radius:2px;margin-top:8px;letter-spacing:.04em}
+.objs{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:10px}
+.obj{display:flex;flex-direction:column;align-items:center;gap:6px;padding:13px 6px;border-radius:14px;
+  border:1px solid var(--beige-300);background:var(--beige-50);cursor:pointer;font-family:var(--body);
+  font-weight:600;font-size:12px;color:var(--bark);transition:all .25s}
+.obj .ico{font-size:18px;line-height:1}
+.obj:hover{border-color:rgba(74,140,63,.4);transform:translateY(-2px)}
+.obj.sel{border-color:var(--green-600);background:var(--green-50);color:var(--green-800);box-shadow:0 6px 18px rgba(74,140,63,.12)}
+.clear{width:100%;font-family:var(--body);font-weight:600;font-size:12px;letter-spacing:.06em;
+  padding:9px;border-radius:12px;border:1px solid var(--beige-300);background:transparent;color:rgba(42,35,24,.55);cursor:pointer;transition:.2s}
+.clear:hover{border-color:var(--clay);color:var(--clay)}
 
-/* meter bars */
-.meter{display:grid;grid-template-columns:46px 1fr 40px;align-items:center;gap:8px;margin:5px 0;font-size:11px}
-.meter .name{color:var(--ink-dim);letter-spacing:.06em}
-.meter .track{height:8px;background:#0a1014;border:1px solid var(--line);border-radius:2px;overflow:hidden;position:relative}
-.meter .fill{position:absolute;inset:0;width:0;transform-origin:left;
-  background:linear-gradient(90deg, rgba(155,255,26,.35), var(--lime));transition:width .06s linear}
-.meter.pip .fill{background:linear-gradient(90deg, rgba(52,226,226,.3), var(--cyan))}
-.meter.force .fill{background:linear-gradient(90deg, rgba(255,138,30,.3), var(--amber))}
-.meter .val{color:var(--ink);text-align:right;font-variant-numeric:tabular-nums}
+.kv{display:flex;justify-content:space-between;align-items:center;font-size:13px;padding:4px 0;color:rgba(42,35,24,.55)}
+.kv b{color:var(--bark);font-weight:600;font-family:var(--mono);font-size:12px}
+.kv .g{color:var(--green-600)} .kv .a{color:var(--amber)} .kv .c{color:var(--clay)}
 
-.battery{display:flex;align-items:center;gap:10px;margin-bottom:8px}
-.battery .cell{flex:1;height:14px;border:1px solid var(--line-hi);border-radius:2px;position:relative;overflow:hidden;background:#0a1014}
-.battery .cell i{position:absolute;inset:1px;width:60%;background:linear-gradient(90deg,#5fae1a,var(--lime));transition:width .2s}
-.battery .pct{font-size:12px;color:var(--lime);width:42px;text-align:right}
+.meter{display:grid;grid-template-columns:74px 1fr 42px;align-items:center;gap:9px;margin:5px 0;font-size:11px}
+.meter .nm{font-family:var(--mono);color:rgba(42,35,24,.5);letter-spacing:.04em}
+.meter .track{height:7px;border-radius:999px;background:var(--beige-200);overflow:hidden;position:relative}
+.meter .fill{position:absolute;inset:0;width:0;border-radius:999px;background:var(--green-500);transition:width .07s linear}
+.meter.pip .fill{background:var(--green-700)}
+.meter.force .fill{background:var(--amber)}
+.meter .v{text-align:right;font-family:var(--mono);color:var(--bark);font-variant-numeric:tabular-nums}
 
-.finger-grid{display:grid;grid-template-columns:1fr 1fr;gap:0 14px}
-.note{font-size:10px;color:var(--ink-faint);margin-top:8px;line-height:1.5;letter-spacing:.02em}
+.batt{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.batt .lbl{font-family:var(--mono);font-size:10px;letter-spacing:.12em;color:rgba(42,35,24,.45)}
+.batt .cell{flex:1;height:13px;border-radius:6px;border:1px solid var(--beige-300);background:var(--beige-100);overflow:hidden;position:relative}
+.batt .cell i{position:absolute;inset:1px;width:0;border-radius:5px;background:linear-gradient(90deg,var(--green-400),var(--green-600));transition:width .3s}
+.batt .pct{font-family:var(--mono);font-size:12px;color:var(--green-700);width:40px;text-align:right}
 
-.banner{position:relative;z-index:10;display:none;align-items:center;gap:10px;
-  padding:9px 18px;font-size:12px;letter-spacing:.04em;background:rgba(255,51,68,.1);
-  border-bottom:1px solid rgba(255,51,68,.4);color:#ffb3bb}
+.hex{font-family:var(--mono);font-size:11px;color:var(--amber);word-break:break-all;background:var(--beige-50);
+  border:1px solid var(--beige-200);border-radius:10px;padding:9px;margin-top:8px;letter-spacing:.04em}
+
+/* tabbed data viewer (the "modes") */
+.tabs{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px}
+.tab{font-family:var(--mono);font-size:10px;letter-spacing:.08em;
+  padding:7px 11px;border-radius:999px;border:1px solid var(--beige-300);background:var(--beige-50);
+  color:rgba(42,35,24,.55);cursor:pointer;transition:.2s}
+.tab:hover{border-color:rgba(74,140,63,.4);color:var(--green-700)}
+.tab.active{background:var(--green-600);border-color:var(--green-600);color:#fff}
+.mode{display:none} .mode.active{display:block}
+
+/* oscilloscope graph */
+.scope-wrap{position:relative;border-radius:12px;overflow:hidden;border:1px solid var(--beige-200);background:var(--beige-50)}
+#scope{display:block;width:100%;height:180px}
+.legend{display:flex;flex-wrap:wrap;gap:12px;margin-top:10px}
+.legend span{display:flex;align-items:center;gap:6px;font-family:var(--mono);font-size:10px;color:rgba(42,35,24,.6)}
+.legend i{width:12px;height:3px;border-radius:2px;display:inline-block}
+
+/* raw hex dump */
+.dump{font-family:var(--mono);font-size:11px;line-height:1.7;color:var(--bark);background:var(--beige-50);
+  border:1px solid var(--beige-200);border-radius:10px;padding:10px;overflow-x:auto;white-space:pre;margin-bottom:10px}
+.dump .off{color:rgba(42,35,24,.35)}
+
+/* servo gauges */
+.servo{display:grid;grid-template-columns:54px 1fr 50px;align-items:center;gap:9px;margin:7px 0;font-size:11px}
+.servo .nm{font-family:var(--mono);color:rgba(42,35,24,.5)}
+.servo .track{height:9px;border-radius:999px;background:var(--beige-200);overflow:hidden;position:relative}
+.servo .fill{position:absolute;inset:0;width:0;border-radius:999px;background:linear-gradient(90deg,var(--amber),var(--clay));transition:width .1s}
+.servo .v{text-align:right;font-family:var(--mono);color:var(--bark)}
+
+/* joystick mini-pad */
+.joypad{position:relative;width:64px;height:64px;border-radius:10px;border:1px solid var(--beige-300);
+  background:var(--beige-50);margin:6px 0 2px auto}
+.joypad .cross::before,.joypad .cross::after{content:'';position:absolute;background:var(--beige-300)}
+.joypad .cross::before{left:50%;top:7px;bottom:7px;width:1px}
+.joypad .cross::after{top:50%;left:7px;right:7px;height:1px}
+.joypad i{position:absolute;width:11px;height:11px;border-radius:50%;background:var(--green-600);
+  transform:translate(-50%,-50%);left:50%;top:50%;transition:left .06s,top .06s;box-shadow:0 0 0 3px rgba(74,140,63,.16)}
+
+.banner{position:relative;z-index:10;display:none;align-items:center;gap:10px;margin:0 24px 12px;
+  padding:11px 16px;font-size:13px;border-radius:14px;background:rgba(192,86,63,.1);
+  border:1px solid rgba(192,86,63,.3);color:#8f3a2c}
 .banner.show{display:flex}
 
 /* responsive: stack on phones */
-@media (max-width:820px){
-  main{flex-direction:column;height:calc(100% - 53px)}
-  .stage{flex:0 0 46%}
-  .sidebar{flex:1 1 auto;max-width:none;border-left:none;border-top:1px solid var(--line);flex-direction:column}
-  .brand .sub{display:none}
+@media (max-width:840px){
+  .bar{height:58px;padding:0 12px;gap:8px}
+  .brand .word{font-size:19px;white-space:nowrap}
+  .brand .tag{display:none}
+  .pill{padding:6px 9px;font-size:9px;letter-spacing:.06em}
+  .btn{padding:9px 13px;font-size:11px}
+  main{flex-direction:column;height:calc(100% - 58px);padding:0 12px 12px;gap:12px}
+  .stage{flex:0 0 42%}
+  .side{flex:1 1 auto;max-width:none}
 }
+@media (max-width:560px){
+  /* phones: drop the status pill (state is shown by the button + on-stage overlay)
+     so the Connect button always fits */
+  #pill{display:none}
+}
+
+/* ---- on-screen debug console -------------------------------------------- */
+#dbgToggle{position:fixed;right:10px;bottom:10px;z-index:9998;
+  font-family:var(--mono);font-size:11px;padding:7px 11px;border-radius:999px;
+  border:1px solid var(--green-700);background:var(--green-600);color:#fff;
+  cursor:pointer;opacity:.82;box-shadow:0 4px 16px rgba(0,0,0,.25)}
+#dbgToggle:hover{opacity:1}
+#dbg{position:fixed;left:8px;right:8px;bottom:8px;z-index:9999;height:42vh;
+  display:flex;flex-direction:column;background:#15140f;color:#d8e8d2;
+  border:1px solid var(--green-700);border-radius:12px;overflow:hidden;
+  box-shadow:0 10px 40px rgba(0,0,0,.5)}
+#dbg.hide{display:none}
+#dbgHead{display:flex;align-items:center;gap:8px;padding:8px 10px;
+  background:#1e1d16;font-family:var(--mono);font-size:11px;color:#9fb798;
+  border-bottom:1px solid #2c2b22}
+#dbgHead span:first-child{font-weight:600;color:#cfe3c8}
+#dbgStat{margin-left:auto;color:#e6c98a;white-space:nowrap}
+#dbgHead button{font-family:var(--mono);font-size:11px;background:#2c2b22;
+  color:#cfe3c8;border:none;border-radius:6px;padding:3px 8px;cursor:pointer}
+#dbgHead button:hover{background:#3a3930}
+#dbgBody{flex:1;overflow-y:auto;padding:8px 10px;font-family:var(--mono);
+  font-size:11px;line-height:1.45;white-space:pre-wrap;word-break:break-word}
+#dbgBody .l-log{color:#cfe3c8}
+#dbgBody .l-warn{color:#e6c98a}
+#dbgBody .l-err{color:#f0907a}
+#dbgBody .t{color:#6f8a68;margin-right:6px}
+
+/* ---- live tuning panel -------------------------------------------------- */
+#tuneToggle{position:fixed;right:10px;bottom:48px;z-index:9998;
+  font-family:var(--mono);font-size:11px;padding:7px 11px;border-radius:999px;
+  border:1px solid var(--amber);background:var(--beige-50);color:var(--bark);
+  cursor:pointer;opacity:.9;box-shadow:0 4px 16px rgba(0,0,0,.2)}
+#tuneToggle:hover{opacity:1}
+#tune{position:fixed;right:8px;top:8px;bottom:8px;width:300px;max-width:92vw;z-index:9999;
+  display:flex;flex-direction:column;background:rgba(250,248,244,.97);backdrop-filter:blur(8px);
+  border:1px solid var(--beige-300);border-radius:14px;overflow:hidden;
+  box-shadow:0 12px 44px rgba(0,0,0,.28)}
+#tune.hide{display:none}
+#tuneHead{display:flex;align-items:center;gap:8px;padding:10px 12px;background:var(--beige-100);
+  font-family:var(--mono);font-size:12px;color:var(--bark);border-bottom:1px solid var(--beige-300)}
+#tuneHead span{font-weight:600;margin-right:auto}
+#tuneHead button{font-family:var(--mono);font-size:11px;background:var(--green-600);color:#fff;
+  border:none;border-radius:7px;padding:4px 9px;cursor:pointer}
+#tuneHead button:hover{background:var(--green-700)}
+#tuneBody{flex:1;overflow-y:auto;padding:6px 12px 14px}
+#tuneBody .sec{font-family:var(--mono);font-size:11px;font-weight:600;color:var(--green-700);
+  text-transform:uppercase;letter-spacing:.05em;margin:14px 0 6px;border-bottom:1px solid var(--beige-200);padding-bottom:3px}
+#tuneBody .row{display:flex;align-items:center;gap:8px;margin:5px 0;font-family:var(--mono);font-size:11px}
+#tuneBody .row label{flex:0 0 92px;color:rgba(42,35,24,.7)}
+#tuneBody .row input[type=range]{flex:1;min-width:0;accent-color:var(--green-600)}
+#tuneBody .row .val{flex:0 0 44px;text-align:right;color:var(--bark)}
+#tuneBody .row select,#tuneBody .row button.seg{font-family:var(--mono);font-size:11px;flex:1;
+  border:1px solid var(--beige-300);border-radius:6px;padding:3px;background:var(--beige-50);color:var(--bark);cursor:pointer}
 </style>
 </head>
 <body>
 
-<header class="hud-bar">
+<header class="bar">
   <div class="brand">
-    <span class="glyph">◣◢</span> Haptic&nbsp;Glove
-    <span class="sub">// Telemetry Console</span>
+    <span class="word">force feedback glove</span>
   </div>
   <div class="bar-right">
-    <div class="readout">STREAM <b id="rate">0</b> Hz</div>
-    <div id="status" class="status is-sim"><span class="dot"></span><span class="label" id="statusLabel">Simulation</span></div>
-    <button id="simBtn" class="btn btn-ghost">Sim: On</button>
+    <div id="pill" class="pill"><span class="dot"></span><span id="pillLabel">Disconnected</span></div>
     <button id="connectBtn" class="btn btn-primary">Connect Glove</button>
   </div>
 </header>
 
 <div id="banner" class="banner"></div>
 
+<!-- On-screen debug console: readable directly on the phone (no chrome://inspect
+     needed). Mirrors console.log/warn/error + shows live BLE/packet counters. -->
+<button id="dbgToggle" title="Toggle debug log">debug</button>
+<div id="dbg" class="hide">
+  <div id="dbgHead">
+    <span>debug log</span>
+    <span id="dbgStat">—</span>
+    <button id="dbgClear">clear</button>
+    <button id="dbgClose">×</button>
+  </div>
+  <div id="dbgBody"></div>
+</div>
+
+<!-- Live tuning panel: sliders for the hand + objects, applied in real time. -->
+<button id="tuneToggle" title="Tune the hand & objects">tune</button>
+<div id="tune" class="hide">
+  <div id="tuneHead">
+    <span>tuning</span>
+    <button id="tuneCopy">copy values</button>
+    <button id="tuneClose">×</button>
+  </div>
+  <div id="tuneBody"></div>
+</div>
+
+<script>
+/* On-screen debug console. Plain (non-module) script so it runs BEFORE the
+   deferred module below — every console.log/warn/error from the app is mirrored
+   onto the phone screen. Also exposes window.dbgStat() for live counters. */
+(function(){
+  const body = document.getElementById('dbgBody');
+  const panel = document.getElementById('dbg');
+  const stat = document.getElementById('dbgStat');
+  let lines = 0;
+  function stamp(){ const d=new Date(); return d.toLocaleTimeString('en-GB',{hour12:false})+'.'+String(d.getMilliseconds()).padStart(3,'0'); }
+  function add(kind, args){
+    if (!body) return;
+    const row = document.createElement('div');
+    row.className = 'l-'+kind;
+    const txt = args.map(a => {
+      if (typeof a === 'string') return a;
+      try { return JSON.stringify(a); } catch(_){ return String(a); }
+    }).join(' ');
+    row.innerHTML = '<span class="t">'+stamp()+'</span>'+txt.replace(/[<>&]/g,c=>({'<':'&lt;','>':'&gt;','&':'&amp;'}[c]));
+    body.appendChild(row);
+    if (++lines > 400){ body.removeChild(body.firstChild); lines--; }
+    body.scrollTop = body.scrollHeight;
+  }
+  ['log','warn','error'].forEach(fn => {
+    const orig = console[fn].bind(console);
+    console[fn] = (...a) => { add(fn==='log'?'log':fn, a); orig(...a); };
+  });
+  window.dbgStat = (t) => { if (stat) stat.textContent = t; };
+  document.getElementById('dbgToggle').onclick = () => panel.classList.toggle('hide');
+  document.getElementById('dbgClose').onclick  = () => panel.classList.add('hide');
+  document.getElementById('dbgClear').onclick  = () => { body.innerHTML=''; lines=0; };
+  window.addEventListener('error', e => add('err', ['[window.error]', e.message, '@', (e.filename||'')+':'+e.lineno]));
+  window.addEventListener('unhandledrejection', e => add('err', ['[promise]', (e.reason && e.reason.message) || e.reason]));
+  console.log('[debug] on-screen console ready. Tap “debug” (bottom-right) to show/hide.');
+})();
+</script>
+
 <main>
   <section class="stage">
     <canvas id="three"></canvas>
-    <div class="stage-tag tl">UNIT <b>FYDPGloveRight</b> · right hand</div>
+    <div class="stage-tag tl">Unit <b>GloveRight</b></div>
     <div class="stage-tag bl">drag to orbit · scroll to zoom</div>
-    <div id="grabBadge" class="grab-badge">● GRAB</div>
+    <div id="grabBadge" class="grab-badge">● grabbing</div>
+    <button id="resetView" class="reset-view" title="Reset camera framing">⟲ reset view</button>
+    <div id="discon" class="discon">
+      <div class="discon-card">
+        <div class="discon-icon">
+          <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m7 7 10 10-5 5V2l5 5L7 17"/></svg>
+        </div>
+        <h2>connect your glove</h2>
+        <p>Power on the glove and tap <b>Connect Glove</b>. The hand mirrors your fingers live, and grabbing an object drives the force-feedback servos.</p>
+      </div>
+    </div>
   </section>
 
-  <aside class="sidebar">
-    <!-- OBJECTS -->
-    <div class="panel">
+  <aside class="side">
+    <!-- Objects: the control you drive the demo with (always visible) -->
+    <div class="card">
       <h2>Objects</h2>
-      <div class="spawn-row">
-        <button class="btn" data-obj="ball"><span class="ico">⬤</span>Ball</button>
-        <button class="btn" data-obj="cube"><span class="ico">⬛</span>Cube</button>
-        <button class="btn" data-obj="mouse"><span class="ico">🖱</span>Mouse</button>
+      <div class="objs">
+        <button class="obj" data-obj="ball"><span class="ico">⬤</span>Ball</button>
+        <button class="obj" data-obj="cube"><span class="ico">⬛</span>Cube</button>
+        <button class="obj" data-obj="mouse"><span class="ico">🖱</span>Mouse</button>
       </div>
-      <button id="clearObj" class="btn btn-ghost clear-btn">Clear Object</button>
-      <div class="kv" style="margin-top:10px"><span>Spawned</span><b id="objName">none</b></div>
-      <div class="kv"><span>Engage&nbsp;@</span><b class="amber" id="objEngage">—</b></div>
-      <div class="kv"><span>Force</span><b class="amber" id="objForce">—</b></div>
+      <button id="clearObj" class="clear">Clear object</button>
+      <div class="kv" style="margin-top:12px"><span>Spawned</span><b id="objName">none</b></div>
+      <div class="kv"><span>Engage&nbsp;@</span><b class="a" id="objEngage">—</b></div>
+      <div class="kv"><span>Force</span><b class="a" id="objForce">—</b></div>
     </div>
 
-    <!-- FORCE OUTPUT -->
-    <div class="panel force">
-      <h2>Force Output</h2>
-      <div class="kv"><span>Grab state</span><b id="grabState">open</b></div>
-      <div class="kv"><span>Writes</span><b id="writeRate" class="amber">0</b><span style="color:var(--ink-faint)">/s</span></div>
-      <div id="forceBars"></div>
-      <div class="kv" style="margin-top:8px"><span>Last packet (10B)</span></div>
-      <div class="hex" id="forceHex">—— —— —— —— ——</div>
-    </div>
-
-    <!-- TELEMETRY -->
-    <div class="panel">
-      <h2>Sensor Telemetry</h2>
-      <div class="battery">
-        <span style="font-size:11px;color:var(--ink-dim);letter-spacing:.1em">BATT</span>
-        <div class="cell"><i id="battFill"></i></div>
-        <span class="pct" id="battPct">—</span>
+    <!-- Live data: switch "modes" with the tabs (declutters the sidebar) -->
+    <div class="card">
+      <h2>Live data</h2>
+      <div class="tabs" id="tabs">
+        <button class="tab active" data-mode="telemetry">Telemetry</button>
+        <button class="tab" data-mode="graph">Graph</button>
+        <button class="tab" data-mode="force">Force</button>
+        <button class="tab" data-mode="servos">Servos</button>
+        <button class="tab" data-mode="raw">Raw</button>
+        <button class="tab" data-mode="ble">BLE</button>
       </div>
-      <div id="bendBars"></div>
-      <div class="kv" style="margin-top:8px"><span>Button</span><b id="btnVal">0</b></div>
-      <div class="kv"><span>Joystick</span><b id="joyVal">0, 0</b></div>
-      <div class="kv"><span>Orientation</span><b id="oriVal" class="lime">n/a</b></div>
-      <div class="note" id="dataNote"></div>
+
+      <!-- TELEMETRY -->
+      <div class="mode active" data-mode="telemetry">
+        <div class="batt">
+          <span class="lbl">Battery</span>
+          <div class="cell"><i id="battFill"></i></div>
+          <span class="pct" id="battPct">—</span>
+        </div>
+        <div id="bendBars"></div>
+        <div class="kv" style="margin-top:8px"><span>Button</span><b id="btnVal">—</b></div>
+        <div class="kv"><span>Joystick</span><b id="joyVal">—</b></div>
+        <div class="joypad" title="joystick X/Y"><div class="cross"></div><i id="joyDot"></i></div>
+        <div class="kv"><span>Orientation</span><b class="g" id="oriVal">n/a</b></div>
+      </div>
+
+      <!-- GRAPH (oscilloscope) -->
+      <div class="mode" data-mode="graph">
+        <div class="scope-wrap"><canvas id="scope"></canvas></div>
+        <div class="legend" id="legend"></div>
+        <div class="kv" style="margin-top:6px"><span>per-finger curl · ~10 s window</span><b id="rateG">— Hz</b></div>
+      </div>
+
+      <!-- FORCE -->
+      <div class="mode" data-mode="force">
+        <div class="kv"><span>Grab state</span><b id="grabState">open</b></div>
+        <div class="kv"><span>Writes</span><b class="a"><span id="writeRate">0</span>/s</b></div>
+        <div id="forceBars"></div>
+        <div class="kv" style="margin-top:8px"><span>Last packet (10 B)</span></div>
+        <div class="hex" id="forceHex">—— —— —— —— ——</div>
+      </div>
+
+      <!-- SERVOS -->
+      <div class="mode" data-mode="servos">
+        <div id="servoRows"></div>
+        <div class="kv" style="margin-top:8px;font-size:11px;color:rgba(42,35,24,.4)">
+          <span>angle = engage byte → 0–180° (firmware maps the engage byte to the servo position)</span>
+        </div>
+      </div>
+
+      <!-- RAW -->
+      <div class="mode" data-mode="raw">
+        <div class="dump" id="rawDump">— no packet yet —</div>
+        <div id="rawDecode"></div>
+      </div>
+
+      <!-- BLE -->
+      <div class="mode" data-mode="ble">
+        <div class="kv"><span>Device</span><b id="bleName">—</b></div>
+        <div class="kv"><span>State</span><b id="bleState">disconnected</b></div>
+        <div class="kv"><span>Stream</span><b><span id="bleRate">—</span> Hz</b></div>
+        <div class="kv"><span>Packets</span><b id="blePkts">0</b></div>
+        <div class="kv"><span>Throughput</span><b id="bleBps">0 B/s</b></div>
+        <div class="kv"><span>Dropped</span><b id="bleBad">0</b></div>
+        <div class="kv" style="margin-top:8px"><span>Service</span><b id="bleSvc" style="font-size:9px">—</b></div>
+        <div class="kv"><span>Notify</span><b id="bleNotify" style="font-size:9px">—</b></div>
+        <div class="kv"><span>Write</span><b id="bleWrite" style="font-size:9px">—</b></div>
+      </div>
     </div>
   </aside>
 </main>
@@ -243,58 +454,402 @@ main{position:relative;z-index:5;display:flex;height:calc(100% - 53px);overflow:
 <script type="module">
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 
-// All packet parsing / force encoding / grab logic lives in a dependency-free,
-// unit-tested module (glove-protocol.js + tests/). One source of truth shared by
-// the app AND the tests, so the firmware byte contract can never silently drift.
+// Dependency-free, unit-tested protocol layer (shared with tests/).
+// NOTE: Simulation Mode has been removed — this demo is about the real glove.
 import {
-  GATT, FORCE_PROFILES, GRAB,
-  parsePacket, splayToFingers, buildForcePacket, ZERO_FORCE,
-  graspPoseMet, synthPacket,
+  GATT, FORCE_PROFILES, GRAB, clamp01,
+  parsePacket, splayToFingers, buildForcePacket, buildForcePacketPerFinger, ZERO_FORCE, graspPoseMet,
 } from './glove-protocol.js';
 
 /* ============================================================================
-   1. APP CONFIG  ── view / I-O settings (protocol constants come from the module)
+   1. APP CONFIG
    ========================================================================== */
-// --- Force write rate-limit: send only the latest value, ~1 per 9 ms (matches firmware). ---
-const FORCE_WRITE_INTERVAL_MS = 9;
+const FORCE_WRITE_INTERVAL_MS = 9;                                   // ~1 write / 9 ms, latest only
+const KIN = { mcpMax:1.30, pipMax:1.55, splayMax:0.26, curlSign:1, splaySign:1,  // joint travel (rad)
+  // Thumb has less flexion than the fingers (reduced curl maxes) and OPPOSES as it
+  // flexes: thumbFold rotates the whole thumb forward OVER the palm, thumbOppose
+  // swings it ACROSS toward the fingers. Together they bring the pad INTO the palm.
+  // Tune these against a screenshot; flip a sign if it folds/swings the wrong way.
+  thumbMcpMax:0.95, thumbPipMax:1.05, thumbOppose:1.25, thumbFold:0.70,
+  smooth:0.18 };   // per-frame low-pass on finger curl (lower = smoother, laggier)
+// Collision forgiveness, live-tunable. contactPad: how far past the visible surface
+// counts as a touch. holdPad: extra reach once engaged (hysteresis hold).
+const COLLIDE = { contactPad:0.05, holdPad:0.16 };
+const IDLE_POSE = { mcp:0.08, pip:0.12 };                            // gentle relaxed curl when not connected
 
-// --- Hand kinematic limits (radians of joint travel at full curl / splay) ---
-const KIN = { mcpMax:1.30, pipMax:1.55, splayMax:0.28, curlSign:1, splaySign:1 };
+// Realistic rigged-mesh hand (loaded from Three.js's WebXR generic-hand GLB). If it
+// fails to load on the device, we automatically fall back to the procedural hand so
+// the demo never breaks. The scale/orientation/curl-axis are CALIBRATION knobs --
+// tune them against a screenshot (the model's units + bone axes aren't known up front).
+const USE_RIGGED_HAND = true;
+const RIGGED = {
+  url: 'https://cdn.jsdelivr.net/npm/@webxr-input-profiles/assets@1.0/dist/profiles/generic-hand/right.glb',
+  scale: 11.0,                       // GLB is ~real-hand metres; scale up to our scene
+  rot:  { x: 0.0, y: 0.0, z: 0.0 },  // extra orientation applied to the loaded model
+  pos:  { x: 0.0, y: 0.0, z: 0.0 },  // extra position offset
+  curlAxis: new THREE.Vector3(1, 0, 0),  // local bone axis that flexes a finger (guess; flip if wrong)
+  curlSign: 1,
+  mcpMax: 1.5, pipMax: 1.7,          // bone rotation (rad) at full curl
+};
 
 /* ============================================================================
-   2. THE GLOVE  ── one instance now; the class is built so a 2nd is a drop-in
-      (e.g. gloves.push(new Glove({role:'left', side:-1}))).
+   2. SCENE — light "studio" look to match the Totuki palette
+   ========================================================================== */
+const canvas = document.getElementById('three');
+const renderer = new THREE.WebGLRenderer({ canvas, antialias:true, alpha:true });
+renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+
+const scene = new THREE.Scene();
+
+const camera = new THREE.PerspectiveCamera(40, 1, 0.1, 100);
+camera.position.set(0.2, 0.5, 5.0);
+
+const controls = new OrbitControls(camera, renderer.domElement);
+controls.enableDamping = true; controls.dampingFactor = 0.08;
+controls.target.set(0, 0.15, 0); controls.minDistance = 2.6; controls.maxDistance = 9;
+controls.enablePan = false;
+// remember the nice default framing so a demo can snap back to it any time
+const CAM0 = camera.position.clone();
+const TGT0 = controls.target.clone();
+
+// soft studio lighting on a warm key + cool sky/ground hemisphere
+scene.add(new THREE.HemisphereLight(0xffffff, 0xd6cdbf, 1.05));
+const key = new THREE.DirectionalLight(0xfff6e8, 1.5);
+key.position.set(3.5, 6, 4);
+key.castShadow = true;
+key.shadow.mapSize.set(2048, 2048);
+key.shadow.camera.near = 1; key.shadow.camera.far = 20;
+key.shadow.camera.left = -4; key.shadow.camera.right = 4; key.shadow.camera.top = 4; key.shadow.camera.bottom = -4;
+key.shadow.bias = -0.0004; key.shadow.radius = 6;
+scene.add(key);
+const fill = new THREE.DirectionalLight(0xdff0db, 0.5); fill.position.set(-4, 1, 2); scene.add(fill);
+
+// soft contact shadow on an invisible ground plane (only the shadow shows)
+const ground = new THREE.Mesh(new THREE.PlaneGeometry(30, 30), new THREE.ShadowMaterial({ opacity:0.16 }));
+ground.rotation.x = -Math.PI / 2; ground.position.y = -1.35; ground.receiveShadow = true; scene.add(ground);
+
+function resize(){
+  const w = canvas.clientWidth, h = canvas.clientHeight;
+  if (w && h && (canvas.width !== w || canvas.height !== h)){
+    renderer.setSize(w, h, false);
+    camera.aspect = w / h; camera.updateProjectionMatrix();
+  }
+}
+
+/* ============================================================================
+   3. 3D ARTICULATED HAND — cream "bones", green joints, soft + organic
+   ========================================================================== */
+const DEG2RAD  = Math.PI / 180;
+const matBone  = new THREE.MeshStandardMaterial({ color:0xefe7d8, metalness:0.0, roughness:0.55 });
+const matPalm  = new THREE.MeshStandardMaterial({ color:0xe6dccb, metalness:0.0, roughness:0.6 });
+const matJoint = new THREE.MeshStandardMaterial({ color:0x5a9e4d, metalness:0.1, roughness:0.4 });
+const matSleeve= new THREE.MeshStandardMaterial({ color:0xd6cdbf, metalness:0.0, roughness:0.7 });
+const matCuff  = new THREE.MeshStandardMaterial({ color:0x4a8c3f, metalness:0.1, roughness:0.45 });
+
+function phalanx(radius, len, mat){
+  const m = new THREE.Mesh(new THREE.CapsuleGeometry(radius, len, 8, 18), mat);
+  m.position.y = len / 2 + radius * 0.4;
+  m.castShadow = true;
+  return m;
+}
+function joint(radius){
+  const m = new THREE.Mesh(new THREE.SphereGeometry(radius, 20, 20), matJoint);
+  m.castShadow = true;
+  return m;
+}
+// Real fingers have THREE phalanges (proximal/middle/distal) with MCP, PIP, DIP
+// joints; the thumb has two. Passing mid>0 builds a 3-segment finger; mid=0 (thumb)
+// builds a 2-segment one. Rig: root(splay) -> mcp(curl) -> pip(curl) -> dip(curl) -> tip
+function makeFinger({ x, y, z=0, prox, mid=0, dist, radius, baseRotZ=0, baseRotX=0 }){
+  const root = new THREE.Group(); root.position.set(x, y, z); root.rotation.z = baseRotZ; root.rotation.x = baseRotX;
+  const mcp  = new THREE.Group(); root.add(mcp);
+  mcp.add(joint(radius * 1.10));
+  mcp.add(phalanx(radius, prox, matBone));
+  const pip  = new THREE.Group(); pip.position.y = prox + radius * 0.55; mcp.add(pip);
+  pip.add(joint(radius * 0.92));
+  let dip = pip;   // 2-segment (thumb): the distal phalanx hangs off pip, dip === pip
+  if (mid > 0){
+    pip.add(phalanx(radius * 0.90, mid, matBone));
+    dip = new THREE.Group(); dip.position.y = mid + radius * 0.50; pip.add(dip);
+    dip.add(joint(radius * 0.80));
+    dip.add(phalanx(radius * 0.80, dist, matBone));
+  } else {
+    pip.add(phalanx(radius * 0.88, dist, matBone));
+  }
+  const tipR = radius * 0.78;
+  // tip gets its OWN material instance so it can be tinted on contact independently
+  const tip = new THREE.Mesh(new THREE.SphereGeometry(tipR, 16, 16), matBone.clone());
+  tip.position.y = dist + radius * 0.48; tip.castShadow = true; dip.add(tip);
+  return { root, mcp, pip, dip, tip, tipR };   // tip + radius used for per-finger collision
+}
+
+class HandModel {
+  constructor(side = 1){
+    this.group = new THREE.Group();
+    this.group.scale.x = side;
+    this.baseRot = { x:-0.5, y:0.45, z:0 };   // pleasant 3/4 resting view
+    this.group.rotation.set(this.baseRot.x, this.baseRot.y, this.baseRot.z);
+
+    // palm — a rounded slab
+    const palm = new THREE.Mesh(new THREE.BoxGeometry(1.15, 1.2, 0.42), matPalm);
+    palm.geometry.translate(0, -0.1, 0);
+    palm.castShadow = true; palm.receiveShadow = true;
+    this.group.add(palm);
+
+    // wrist: a green cuff + a tapered forearm stub so the hand looks attached
+    const cuff = new THREE.Mesh(new THREE.CylinderGeometry(0.5, 0.5, 0.2, 28), matCuff);
+    cuff.position.y = -0.74; cuff.castShadow = true; this.group.add(cuff);
+    const forearm = new THREE.Mesh(new THREE.CylinderGeometry(0.46, 0.34, 1.0, 28), matSleeve);
+    forearm.position.set(0, -1.32, -0.05); forearm.rotation.x = 0.12;
+    forearm.castShadow = true; this.group.add(forearm);
+
+    //                index   middle    ring    pinky
+    const xs       = [-0.40,  -0.135,   0.135,   0.40 ];  // spread across the knuckles
+    const ys       = [ 0.50,   0.58,    0.51,    0.36 ];  // knuckle ARC: middle highest, pinky lowest
+    const zs       = [ 0.13,   0.05,   -0.05,   -0.15 ];  // depth cascade -> NOT one flat plane
+    const proxLens = [ 0.40,   0.46,    0.42,    0.34 ];  // proximal phalanx (longest)
+    const midLens  = [ 0.30,   0.34,    0.31,    0.24 ];  // middle phalanx (NEW 3rd segment)
+    const distLens = [ 0.24,   0.28,    0.26,    0.20 ];  // distal phalanx (shortest)
+    const restFan  = [ 0.10,   0.03,   -0.04,   -0.13 ];  // gentle outward fan at rest (less spread)
+    const restTilt = [ 0.10,   0.06,    0.08,    0.16 ];  // slight forward set over the palm (rad)
+    const radii    = [ 0.125,  0.130,   0.122,   0.106];  // fingers taper in thickness
+    this.fingers = [];
+    // thumb — SMALLER (thinner + shorter) than the fingers' radius, 2-segment.
+    // Rests at a mild angle pointing up-and-forward toward the index (NOT straight
+    // out sideways), per real anatomy. baseRotZ lower = more upright; baseRotX higher
+    // = more forward over the palm. Opposition (apply) then folds it across.
+    const thumb = makeFinger({ x:-0.56, y:0.00, z:0.20, prox:0.42, dist:0.32, radius:0.115, baseRotZ:0.62, baseRotX:0.50 });
+    this.group.add(thumb.root); this.fingers.push(thumb); thumb._restZ = 0.62; thumb._restX = 0.50;
+    for (let i = 0; i < 4; i++){
+      const fg = makeFinger({ x:xs[i], y:ys[i], z:zs[i], prox:proxLens[i], mid:midLens[i], dist:distLens[i],
+                              radius:radii[i], baseRotZ:restFan[i], baseRotX:restTilt[i] });
+      this.group.add(fg.root); this.fingers.push(fg); fg._restZ = restFan[i];
+    }
+
+    // grasp anchor: a group at the palm "hold" zone, PARENTED to the hand so any
+    // spawned object always sits in the palm (fixes the floating-object bug).
+    this.graspAnchor = new THREE.Group();
+    this.graspAnchor.position.set(0, 0.42, 0.66);   // sits in the path the fingertips sweep when curling
+    this.group.add(this.graspAnchor);
+  }
+
+  apply(state, sway){
+    // fingers
+    const splays = splayToFingers(state.splayRaw);
+    // Low-pass smoothing: the firmware now averages fewer samples (faster, but
+    // noisier), so we filter each finger's curl/splay here. SMOOTH is the per-frame
+    // blend toward the live value (0..1): lower = smoother but laggier. This also
+    // smooths collision + force, since those read the resulting fingertip pose.
+    if (!this._sm) this._sm = { mcp:[0,0,0,0,0], pip:[0,0,0,0,0], sp:[0,0,0,0,0] };
+    const SMOOTH = KIN.smooth;   // lower = smoother (less jitter), slightly laggier
+    for (let f = 0; f < 5; f++){
+      const fg = this.fingers[f];
+      this._sm.mcp[f] += (state.fingers[f].mcp - this._sm.mcp[f]) * SMOOTH;
+      this._sm.pip[f] += (state.fingers[f].pip - this._sm.pip[f]) * SMOOTH;
+      this._sm.sp[f]  += (splays[f]            - this._sm.sp[f])  * SMOOTH;
+      const mcpv = this._sm.mcp[f], pipv = this._sm.pip[f], spv = this._sm.sp[f];
+      if (f === 0){
+        // THUMB OPPOSITION: as it flexes, FOLD the whole thumb forward over the palm
+        // (root.x) AND swing it across toward the fingers (root.z) so the pad comes
+        // INTO the palm to meet the fingers. Plus its own curl. Knobs in KIN; flip a
+        // sign if it folds the wrong way.
+        fg.mcp.rotation.x  = KIN.curlSign * mcpv * KIN.thumbMcpMax;
+        fg.pip.rotation.x  = KIN.curlSign * pipv * KIN.thumbPipMax;
+        fg.root.rotation.x = (fg._restX || 0) + KIN.thumbFold   * mcpv;   // fold forward over palm
+        fg.root.rotation.z = (fg._restZ || 0) - KIN.thumbOppose * mcpv;   // swing across into palm
+      } else {
+        fg.mcp.rotation.x = KIN.curlSign * mcpv * KIN.mcpMax;
+        fg.pip.rotation.x = KIN.curlSign * pipv * KIN.pipMax;
+        // DIP follows PIP (~65%) — natural distal-joint cascade on the 3-segment fingers.
+        if (fg.dip !== fg.pip) fg.dip.rotation.x = fg.pip.rotation.x * 0.65;
+        fg.root.rotation.z = (fg._restZ || 0) + KIN.splaySign * spv * KIN.splayMax;
+      }
+    }
+    // whole-hand orientation target:
+    //  - connected w/ IMU  -> map the real hand's roll/pitch/yaw onto the model
+    //  - otherwise         -> rest pose + a gentle idle sway so it looks alive
+    const b = this.baseRot;
+    let tx = b.x, ty = b.y, tz = b.z;
+    if (state.orientation){
+      const o = state.orientation, f = 0.8 * DEG2RAD, lim = 0.9;
+      const cl = v => Math.max(-lim, Math.min(lim, v));
+      tx = b.x + cl(o.pitch * f);
+      ty = b.y + cl(o.yaw   * f);
+      tz = b.z - cl(o.roll  * f);
+    } else if (sway){
+      tx += sway.x; ty += sway.y;
+    }
+    const g = this.group.rotation;
+    g.x += (tx - g.x) * 0.18; g.y += (ty - g.y) * 0.18; g.z += (tz - g.z) * 0.18;
+  }
+}
+
+/* ----------------------------------------------------------------------------
+   RiggedHandModel — a REALISTIC hand: loads Three.js's WebXR generic-hand GLB
+   (a real rigged mesh) and drives its finger bones from the sensors. Exposes the
+   same interface the rest of the app needs (group, fingers[].tip/.tipR, graspAnchor,
+   apply). The model's anatomy (incl. the thumb) is correct by construction, so we
+   just rotate the named phalanx bones. Falls back to the procedural hand on failure.
+   -------------------------------------------------------------------------- */
+const _rq = new THREE.Quaternion();
+class RiggedHandModel {
+  constructor(){
+    this.group = new THREE.Group();
+    this.baseRot = { x:-0.5, y:0.45, z:0 };
+    this.group.rotation.set(this.baseRot.x, this.baseRot.y, this.baseRot.z);
+    this.fingers = [];
+    this.ready = false;
+    this._sm = { mcp:[0,0,0,0,0], pip:[0,0,0,0,0] };
+    this.graspAnchor = new THREE.Group();
+    this.graspAnchor.position.set(0, 0.42, 0.66);
+    this.group.add(this.graspAnchor);
+  }
+  load(onDone, onFail){
+    new GLTFLoader().load(RIGGED.url, (gltf) => {
+      const root = gltf.scene;
+      root.scale.setScalar(RIGGED.scale);
+      root.rotation.set(RIGGED.rot.x, RIGGED.rot.y, RIGGED.rot.z);
+      root.position.set(RIGGED.pos.x, RIGGED.pos.y, RIGGED.pos.z);
+      root.traverse(o => { if (o.isMesh) { o.castShadow = true; o.frustumCulled = false; } });
+      this.group.add(root);
+      this.root = root;   // kept so the live tuning panel can move/scale/rotate it
+      const get = n => root.getObjectByName(n);
+      const defs = [
+        ['thumb-phalanx-proximal',         'thumb-phalanx-distal',               'thumb-tip'],
+        ['index-finger-phalanx-proximal',  'index-finger-phalanx-intermediate',  'index-finger-tip'],
+        ['middle-finger-phalanx-proximal', 'middle-finger-phalanx-intermediate', 'middle-finger-tip'],
+        ['ring-finger-phalanx-proximal',   'ring-finger-phalanx-intermediate',   'ring-finger-tip'],
+        ['pinky-finger-phalanx-proximal',  'pinky-finger-phalanx-intermediate',  'pinky-finger-tip'],
+      ];
+      this.fingers = defs.map(([p, i, t]) => {
+        const mcpBone = get(p), pipBone = get(i), tip = get(t);
+        return { mcpBone, pipBone, tip: tip || pipBone || mcpBone, tipR: 0.12,
+                 mcpRest: mcpBone ? mcpBone.quaternion.clone() : null,
+                 pipRest: pipBone ? pipBone.quaternion.clone() : null };
+      });
+      const found = this.fingers.filter(f => f.mcpBone && f.tip).length;
+      console.log('[hand] rigged GLB loaded — finger chains found: ' + found + '/5');
+      if (found < 5) { onFail && onFail('expected bones not found in model'); return; }
+      this.ready = true;
+      onDone && onDone();
+    }, undefined, (err) => { console.error('[hand] rigged GLB failed to load:', err); onFail && onFail(err); });
+  }
+  _curl(bone, rest, angle){
+    if (!bone || !rest) return;
+    _rq.setFromAxisAngle(RIGGED.curlAxis, RIGGED.curlSign * angle);
+    bone.quaternion.copy(rest).multiply(_rq);
+  }
+  apply(state, sway){
+    if (this.ready){
+      const S = KIN.smooth;
+      for (let f = 0; f < 5; f++){
+        const fg = this.fingers[f];
+        this._sm.mcp[f] += (state.fingers[f].mcp - this._sm.mcp[f]) * S;
+        this._sm.pip[f] += (state.fingers[f].pip - this._sm.pip[f]) * S;
+        this._curl(fg.mcpBone, fg.mcpRest, this._sm.mcp[f] * RIGGED.mcpMax);
+        this._curl(fg.pipBone, fg.pipRest, this._sm.pip[f] * RIGGED.pipMax);
+      }
+    }
+    // whole-hand orientation (identical to the procedural hand)
+    const b = this.baseRot; let tx = b.x, ty = b.y, tz = b.z;
+    if (state.orientation){
+      const o = state.orientation, f = 0.8 * DEG2RAD, lim = 0.9, cl = v => Math.max(-lim, Math.min(lim, v));
+      tx = b.x + cl(o.pitch * f); ty = b.y + cl(o.yaw * f); tz = b.z - cl(o.roll * f);
+    } else if (sway){ tx += sway.x; ty += sway.y; }
+    const g = this.group.rotation;
+    g.x += (tx - g.x) * 0.18; g.y += (ty - g.y) * 0.18; g.z += (tz - g.z) * 0.18;
+  }
+}
+
+/* ============================================================================
+   4. SPAWNABLE OBJECTS — nestled into the hand's grasp anchor
+   ========================================================================== */
+let currentObject = null;   // { type, mesh, profile }
+const OBJ_COLOR = { ball:0x5a9e4d, cube:0xc98a3a, mouse:0xb8ad9e };
+// Live-tunable object sizes (ball = radius, cube = full side, mouse = base radius).
+const OBJ_SIZE  = { ball:0.64, cube:0.66, mouse:0.50 };
+
+function spawnObject(type){
+  clearObject();
+  const profile = FORCE_PROFILES[type];
+  const sz = OBJ_SIZE[type];
+  let geo, scale = [1,1,1];
+  if (type === 'ball')      geo = new THREE.SphereGeometry(sz, 44, 32);
+  else if (type === 'cube') geo = new THREE.BoxGeometry(sz, sz, sz);
+  else { geo = new THREE.SphereGeometry(sz, 32, 22); scale = [1.2, 0.5, 1.6]; }  // mouse
+  const mat = new THREE.MeshStandardMaterial({ color:OBJ_COLOR[type], metalness:0.0, roughness:0.5,
+    emissive:OBJ_COLOR[type], emissiveIntensity:0.0 });
+  const mesh = new THREE.Mesh(geo, mat);
+  mesh.castShadow = true; mesh.scale.set(...scale);
+  mesh._baseScale = scale;
+  glove.hand.graspAnchor.add(mesh);            // <-- lives in the palm, moves with the hand
+  // Collision hitbox in the object's LOCAL space. sphere -> radius = size;
+  // box -> half-extents = size/2.
+  const shape = (type === 'cube') ? 'box' : 'sphere';
+  const dim   = (type === 'cube') ? { x:sz/2, y:sz/2, z:sz/2 } : sz;
+  currentObject = { type, mesh, profile, shape, dim };
+
+  document.getElementById('objName').textContent = profile.label;
+  document.getElementById('objEngage').textContent = Math.round(profile.engage*100) + '%';
+  document.getElementById('objForce').textContent  = Math.round(profile.force*100) + '%';
+  for (const b of document.querySelectorAll('[data-obj]')) b.classList.toggle('sel', b.dataset.obj === type);
+}
+function clearObject(){
+  if (currentObject){ glove.hand.graspAnchor.remove(currentObject.mesh); currentObject.mesh.geometry.dispose(); }
+  currentObject = null; isGrabbing = false;
+  document.getElementById('objName').textContent = 'none';
+  document.getElementById('objEngage').textContent = '—';
+  document.getElementById('objForce').textContent = '—';
+  document.getElementById('grabBadge').classList.remove('on');
+  for (const b of document.querySelectorAll('[data-obj]')) b.classList.remove('sel');
+}
+
+/* ============================================================================
+   5. THE GLOVE — one instance; class is built so a 2nd is a clean drop-in.
    ========================================================================== */
 class Glove {
   constructor({ role, side }){
-    this.role = role;
-    this.side = side;                       // +1 right, -1 left (mirrors hand model)
+    this.role = role; this.side = side;
     this.connected = false;
-    this.device = null; this.server = null;
-    this.notifyChar = null; this.forceChar = null;
+    this.device = null; this.server = null; this.notifyChar = null; this.forceChar = null;
     this.state = idleState();
-    this.packetCount = 0;
-    this.badPackets = 0;
-    this._connecting = false;
-    this._pendingForce = null; this._writeBusy = false; this._writeTick = 0;
-    // Bound handlers stored ONCE so we can add *and* remove the same reference.
-    // Chrome may hand back the same BluetoothDevice object on reconnect, so
-    // adding an anonymous listener each connect would stack duplicates and fire
-    // _onDrop N times. Removing-then-adding the same ref keeps it idempotent.
+    this.packetCount = 0; this.totalPackets = 0; this.badPackets = 0; this.bytesIn = 0;
+    this.lastRaw = null; this.streamHz = 0; this.writesPerSec = 0;
+    this._connecting = false; this._pendingForce = null; this._writeBusy = false; this._writeTick = 0;
     this._onDropBound   = () => this._onDrop();
     this._onPacketBound = (e) => this._onPacket(e);
+    // Start with the procedural hand so the demo works instantly; if the realistic
+    // rigged GLB loads OK, swap to it. If the model fails (CDN/CORS/parse), we just
+    // keep the procedural one — the demo never breaks.
     this.hand = new HandModel(side);
     scene.add(this.hand.group);
+    if (USE_RIGGED_HAND) this._upgradeToRigged(side);
+  }
+
+  _upgradeToRigged(side){
+    const rigged = new RiggedHandModel(side);
+    rigged.load(
+      () => {
+        scene.remove(this.hand.group);
+        this.hand = rigged;
+        scene.add(rigged.group);
+        if (currentObject) spawnObject(currentObject.type);   // re-nest object in the new hand
+        console.log('[hand] upgraded to realistic rigged model');
+      },
+      (e) => console.warn('[hand] staying on procedural hand (rigged load failed):', e)
+    );
   }
 
   async connect(){
-    if (this._connecting || this.connected) return;   // ignore re-entrant clicks
-    if (!navigator.bluetooth) throw new Error('Web Bluetooth unavailable (use Chrome/Edge over https or localhost).');
+    if (this._connecting || this.connected) return;
+    if (!navigator.bluetooth) throw new Error('Web Bluetooth needs Chrome/Edge over https or localhost.');
     this._connecting = true;
     try {
-      setStatus('link', 'Selecting…');
-      // Chrome's in-page chooser claims the device — DO NOT pre-pair in OS settings.
+      setStatus('busy', 'Selecting…');
       this.device = await navigator.bluetooth.requestDevice({
         filters: [{ namePrefix: GATT.deviceNamePrefix }],
         optionalServices: [GATT.service],
@@ -302,388 +857,553 @@ class Glove {
       this.device.removeEventListener('gattserverdisconnected', this._onDropBound);
       this.device.addEventListener('gattserverdisconnected', this._onDropBound);
 
-      setStatus('link', 'Connecting…');
+      setStatus('busy', 'Connecting…');
+      console.log('[glove] selected device:', this.device.name, this.device.id);
       this.server = await this.device.gatt.connect();
+      console.log('[glove] GATT connected; looking up service', GATT.service);
       try {
         const svc = await this.server.getPrimaryService(GATT.service);
         this.notifyChar = await svc.getCharacteristic(GATT.notify);
         this.forceChar  = await svc.getCharacteristic(GATT.write);
+        console.log('[glove] found notify char', GATT.notify, '+ write char', GATT.write);
         this.notifyChar.removeEventListener('characteristicvaluechanged', this._onPacketBound);
         this.notifyChar.addEventListener('characteristicvaluechanged', this._onPacketBound);
         await this.notifyChar.startNotifications();
+        console.log('[glove] startNotifications() OK — waiting for packets. '
+          + 'If none arrive, watch the byte length logged below: 20 bytes = MTU not raised (packet truncated).');
       } catch (svcErr) {
-        // Connected to *a* device but its GATT table isn't what we expect (wrong
-        // or old firmware). Tear down so we don't sit half-connected forever.
+        console.error('[glove] service/characteristic setup failed:', svcErr);
         this.disconnect();
-        throw new Error('Connected, but the glove service/characteristics were not found — check the firmware UUIDs. (' + (svcErr.message || svcErr) + ')');
+        throw new Error('Connected, but the glove service/characteristics were not found — check firmware UUIDs. (' + (svcErr.message || svcErr) + ')');
       }
 
-      this.connected = true;
-      this._pendingForce = null; this._writeBusy = false;
-      simEnabled = false; syncSimBtn();
-      setStatus('conn', this.device.name || 'Connected');
-      showBanner('');
-    } finally {
-      this._connecting = false;
+      this.connected = true; this._pendingForce = null; this._writeBusy = false;
+      setStatus('live', this.device.name || 'Connected');
+      showBanner(''); document.getElementById('discon').classList.add('hide');
+    } finally { this._connecting = false; }
+  }
+
+  _onPacket(e){
+    const dv = e.target.value;                                    // DataView
+    try {
+      this.lastRaw = new Uint8Array(dv.buffer.slice(0, dv.byteLength));  // keep raw bytes for the Raw view
+      this.bytesIn += dv.byteLength;
+      this.state = parsePacket(dv);
+      this.packetCount++; this.totalPackets++;
+      // Log the FIRST few packets verbosely so we can see byte length + contents.
+      // 32 = no-IMU packet (expected), 44 = IMU packet, 20 = MTU-truncated (BUG).
+      if (this.totalPackets <= 5) {
+        console.log(`[glove] packet #${this.totalPackets}: ${dv.byteLength} bytes`,
+          [...this.lastRaw].map(b => b.toString(16).padStart(2,'0')).join(' '));
+      }
+    } catch(err){
+      this.badPackets++;
+      // Surface the FIRST bad packet loudly — most likely an MTU-truncated 20-byte
+      // frame. Silent swallowing was hiding exactly this failure mode.
+      if (this.badPackets <= 3) {
+        console.warn(`[glove] BAD packet (${dv?.byteLength} bytes):`, err.message,
+          dv ? [...new Uint8Array(dv.buffer.slice(0, dv.byteLength))].map(b => b.toString(16).padStart(2,'0')).join(' ') : '');
+      }
     }
   }
 
-  // BLE notification callback. e.target.value is a DataView. Guarded so a single
-  // short/garbled packet can never throw inside the event callback and wedge the
-  // notification stream — we just count and drop it.
-  _onPacket(e){
-    try { this.state = parsePacket(e.target.value); this.packetCount++; }
-    catch (_) { this.badPackets++; }
-  }
-
   _onDrop(){
-    this.connected = false;
-    this.notifyChar = this.forceChar = null;
-    this._pendingForce = null; this._writeBusy = false;   // don't write into a dead link
+    this.connected = false; this.notifyChar = this.forceChar = null;
+    this._pendingForce = null; this._writeBusy = false;
+    this.state = idleState();
     setStatus('err', 'Disconnected');
-    showBanner('Glove dropped the link. Tap “Connect Glove” to reconnect — or it falls back to Simulation.');
-    // reset the connect button and fall back to Simulation so the demo keeps moving
+    showBanner('Glove disconnected. Tap “Connect Glove” to reconnect.');
+    document.getElementById('discon').classList.remove('hide');
     connectBtn.textContent = 'Connect Glove'; connectBtn.disabled = false;
-    simEnabled = true; syncSimBtn();
   }
 
-  disconnect(){ try { if (this.device?.gatt?.connected) this.device.gatt.disconnect(); } catch (_) {} }
+  disconnect(){ try { if (this.device?.gatt?.connected) this.device.gatt.disconnect(); } catch(_){} }
 
-  // Non-blocking, non-overlapping, latest-only force writer (driven by the loop below).
   async _flushForce(){
     if (!this.connected || !this.forceChar || this._writeBusy || !this._pendingForce) return;
     const data = this._pendingForce; this._pendingForce = null; this._writeBusy = true;
-    try { await this.forceChar.writeValueWithResponse(data); this._writeTick++; }
-    catch(_) { /* congestion — drop and try next tick */ }
-    finally { this._writeBusy = false; }
+    try {
+      // Write WITHOUT response when supported: skips the ACK round-trip so haptic
+      // force reaches the glove faster. Falls back to a plain write otherwise.
+      if (this.forceChar.writeValueWithoutResponse) await this.forceChar.writeValueWithoutResponse(data);
+      else await this.forceChar.writeValue(data);
+      this._writeTick++;
+    } catch(_){} finally { this._writeBusy = false; }
   }
   queueForce(data){ this._pendingForce = data; lastForceBytes = data; }
 }
 
-/* ============================================================================
-   5. 3D ARTICULATED HAND  ── jointed fingers, MCP + PIP per finger, splay at root
-   ========================================================================== */
-const matBone  = new THREE.MeshStandardMaterial({ color:0x95a3b0, metalness:0.55, roughness:0.42 });
-const matPalm  = new THREE.MeshStandardMaterial({ color:0x6c7c8a, metalness:0.5,  roughness:0.5 });
-const matJoint = new THREE.MeshStandardMaterial({ color:0x9bff1a, emissive:0x223a00, metalness:0.3, roughness:0.5 });
-
-function makePhalanx(radius, len, mat){
-  const m = new THREE.Mesh(new THREE.CapsuleGeometry(radius, len, 6, 14), mat);
-  m.position.y = len / 2 + radius * 0.5;   // base sits near the pivot
-  m.castShadow = true;
-  return m;
-}
-
-// Returns { root, mcp, pip } pivot groups. Curl rotates mcp/pip about local X; splay rotates root about Z.
-function makeFinger({ x, y, z=0, prox, dist, radius, baseRotZ=0, baseRotX=0 }){
-  const root = new THREE.Group(); root.position.set(x, y, z); root.rotation.z = baseRotZ; root.rotation.x = baseRotX;
-  const mcp  = new THREE.Group(); root.add(mcp);
-  mcp.add(new THREE.Mesh(new THREE.SphereGeometry(radius*1.18, 16, 16), matJoint));   // knuckle
-  mcp.add(makePhalanx(radius, prox, matBone));
-  const pip  = new THREE.Group(); pip.position.y = prox + radius; mcp.add(pip);
-  pip.add(new THREE.Mesh(new THREE.SphereGeometry(radius*0.98, 16, 16), matJoint));   // PIP joint
-  pip.add(makePhalanx(radius*0.9, dist, matBone));
-  return { root, mcp, pip };
-}
-
-class HandModel {
-  constructor(side = 1){
-    this.group = new THREE.Group();
-    this.group.scale.x = side;                 // mirror for a left hand
-    this.group.rotation.set(-0.35, 0.5, 0);    // pleasant 3/4 view
-
-    // palm
-    const palm = new THREE.Mesh(new THREE.BoxGeometry(1.05, 1.15, 0.34), matPalm);
-    palm.geometry.translate(0, -0.05, 0);
-    palm.castShadow = true;
-    this.group.add(palm);
-
-    // four fingers across the top edge of the palm
-    const xs = [-0.36, -0.12, 0.12, 0.36];      // index, middle, ring, pinky
-    const proxLens = [0.46, 0.52, 0.48, 0.40];
-    const distLens = [0.36, 0.42, 0.40, 0.32];
-    this.fingers = [];
-    // thumb (index 0) — offset to the side, rotated for opposition
-    const thumb = makeFinger({ x:-0.56, y:-0.12, z:0.12, prox:0.40, dist:0.34, radius:0.14, baseRotZ:0.95, baseRotX:0.25 });
-    this.group.add(thumb.root); this.fingers.push(thumb);
-    for (let i = 0; i < 4; i++){
-      const fg = makeFinger({ x:xs[i], y:0.55, prox:proxLens[i], dist:distLens[i], radius:0.115 });
-      this.group.add(fg.root); this.fingers.push(fg);
-      fg._restZ = 0;
-    }
-    this.fingers[0]._restZ = 0.95;              // thumb keeps its opposition baseline
-  }
-
-  apply(state){
-    const splays = splayToFingers(state.splayRaw);
-    for (let f = 0; f < 5; f++){
-      const fg = this.fingers[f];
-      fg.mcp.rotation.x = KIN.curlSign  * state.fingers[f].mcp * KIN.mcpMax;
-      fg.pip.rotation.x = KIN.curlSign  * state.fingers[f].pip * KIN.pipMax;
-      const restZ = fg._restZ || 0;
-      fg.root.rotation.z = restZ + KIN.splaySign * splays[f] * KIN.splayMax;
-    }
-  }
+function idleState(){
+  return {
+    battery:0,
+    fingers:Array.from({length:5},()=>({mcp:IDLE_POSE.mcp, pip:IDLE_POSE.pip, mcpRaw:0, pipRaw:0})),
+    splayRaw:[2048,2048,2048,2048], button:0, joy:{x:128,y:128}, orientation:null,
+  };
 }
 
 /* ============================================================================
-   6. SCENE
-   ========================================================================== */
-const canvas = document.getElementById('three');
-const renderer = new THREE.WebGLRenderer({ canvas, antialias:true, alpha:true });
-renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
-renderer.shadowMap.enabled = true;
-
-const scene = new THREE.Scene();
-scene.fog = new THREE.Fog(0x06080b, 6, 16);
-
-const camera = new THREE.PerspectiveCamera(42, 1, 0.1, 100);
-camera.position.set(0.4, 0.6, 4.4);
-
-const controls = new OrbitControls(camera, renderer.domElement);
-controls.enableDamping = true; controls.dampingFactor = 0.08;
-controls.target.set(0, 0.1, 0); controls.minDistance = 2.2; controls.maxDistance = 9;
-
-// lighting — cool key + lime hemi + amber rim for the instrument look
-scene.add(new THREE.HemisphereLight(0x6f87a0, 0x0a0e13, 0.85));
-const key = new THREE.DirectionalLight(0xffffff, 1.4); key.position.set(3, 5, 4);
-key.castShadow = true; key.shadow.mapSize.set(1024,1024); scene.add(key);
-const rim = new THREE.PointLight(0xff8a1e, 0.8, 20); rim.position.set(-3, 1, -2); scene.add(rim);
-const fill = new THREE.PointLight(0x9bff1a, 0.5, 20); fill.position.set(2, -1, 3); scene.add(fill);
-
-// floor grid matching the HUD aesthetic
-const grid = new THREE.GridHelper(24, 48, 0x2b3f4d, 0x121a21);
-grid.position.y = -1.25; scene.add(grid);
-const floor = new THREE.Mesh(new THREE.PlaneGeometry(40,40),
-  new THREE.MeshStandardMaterial({ color:0x080c10, metalness:0.2, roughness:0.95 }));
-floor.rotation.x = -Math.PI/2; floor.position.y = -1.26; floor.receiveShadow = true; scene.add(floor);
-
-function resize(){
-  const w = canvas.clientWidth, h = canvas.clientHeight;
-  if (canvas.width !== w || canvas.height !== h){
-    renderer.setSize(w, h, false);
-    camera.aspect = w / h; camera.updateProjectionMatrix();
-  }
-}
-
-/* ---- spawnable objects ---- */
-let currentObject = null;   // { type, mesh, profile }
-const objHolder = new THREE.Group(); objHolder.position.set(0, -0.25, 1.35); scene.add(objHolder);
-
-function spawnObject(type){
-  clearObject();
-  const profile = FORCE_PROFILES[type];
-  let geo;
-  if (type === 'ball') geo = new THREE.SphereGeometry(0.42, 32, 24);
-  else if (type === 'cube') geo = new THREE.BoxGeometry(0.62, 0.62, 0.62);
-  else { geo = new THREE.SphereGeometry(0.42, 28, 20); }     // mouse: squashed sphere
-  const mat = new THREE.MeshStandardMaterial({ color:profile.color, metalness:0.3, roughness:0.45,
-    emissive:profile.color, emissiveIntensity:0.06 });
-  const mesh = new THREE.Mesh(geo, mat); mesh.castShadow = true;
-  if (type === 'mouse') mesh.scale.set(1.25, 0.55, 1.7);
-  objHolder.add(mesh);
-  currentObject = { type, mesh, profile };
-  // UI
-  document.getElementById('objName').textContent = profile.label;
-  document.getElementById('objEngage').textContent = Math.round(profile.engage*100) + '%';
-  document.getElementById('objForce').textContent  = Math.round(profile.force*100) + '%';
-  for (const b of document.querySelectorAll('[data-obj]')) b.classList.toggle('sel', b.dataset.obj === type);
-}
-function clearObject(){
-  if (currentObject){ objHolder.remove(currentObject.mesh); currentObject.mesh.geometry.dispose(); }
-  currentObject = null; isGrabbing = false;
-  document.getElementById('objName').textContent = 'none';
-  document.getElementById('objEngage').textContent = '—';
-  document.getElementById('objForce').textContent = '—';
-  for (const b of document.querySelectorAll('[data-obj]')) b.classList.remove('sel');
-}
-
-/* ============================================================================
-   7. GRAB DETECTION
-   The pose test (graspPoseMet) lives in the tested protocol module; here we just
-   AND it with "is an object spawned?" and drive the force write + visuals.
+   6. PER-FINGER COLLISION + force write
+   Each fingertip is tested against the object's hitbox in the object's LOCAL
+   space. A finger only resists when ITS tip actually touches the object — so the
+   thumb and each finger make contact at their own points, at their own moment in
+   the curl, exactly like grabbing a real object. Force is sent per finger.
    ========================================================================== */
 let isGrabbing = false;
-function detectGrab(state){ return !!currentObject && graspPoseMet(state); }
-function updateGrab(state){
-  const g = detectGrab(state);
-  if (g !== isGrabbing){
-    isGrabbing = g;
-    glove.queueForce(g ? buildForcePacket(currentObject.profile) : ZERO_FORCE);
-    document.getElementById('grabState').textContent = g ? 'GRABBING' : 'open';
-    document.getElementById('grabState').style.color = g ? 'var(--red)' : 'var(--ink)';
-    document.getElementById('grabBadge').classList.toggle('on', g);
+let lastForceBytes = ZERO_FORCE;
+let lastForceKey = '';
+const _tipW = new THREE.Vector3();          // scratch for the tip's world/local position
+
+// Returns 0 (no contact) .. 1 (deep contact) for a tip point in the object's local space.
+// COLLIDE.contactPad = forgiveness past the visible surface. extraPad widens the reach
+// once a finger is already engaged, so it HOLDS the grab (hysteresis, no flicker).
+function objectContact(localPt, tipR, extraPad = 0){
+  const o = currentObject;
+  const pad = COLLIDE.contactPad + extraPad;
+  if (o.shape === 'sphere'){
+    const reach = o.dim + tipR + pad;
+    const d = localPt.length();
+    return d < reach ? clamp01((reach - d) / Math.max(o.dim, 1e-3)) : 0;
+  } else { // box: point-in-expanded-box, penetration = distance inside the nearest face
+    const hx = o.dim.x + tipR + pad, hy = o.dim.y + tipR + pad, hz = o.dim.z + tipR + pad;
+    const ax = Math.abs(localPt.x), ay = Math.abs(localPt.y), az = Math.abs(localPt.z);
+    if (ax < hx && ay < hy && az < hz){
+      const pen = Math.min(hx - ax, hy - ay, hz - az);
+      return clamp01(pen / 0.18);
+    }
+    return 0;
+  }
+}
+function updateGrab(){
+  const forces  = [0,0,0,0,0];
+  const contact = [false,false,false,false,false];
+
+  const engaged = glove._engaged || (glove._engaged = [false,false,false,false,false]);
+  if (currentObject){
+    // make sure the hand + object world matrices are current this frame
+    glove.hand.group.updateWorldMatrix(true, true);
+    for (let f = 0; f < 5; f++){
+      const fg = glove.hand.fingers[f];
+      fg.tip.getWorldPosition(_tipW);
+      currentObject.mesh.worldToLocal(_tipW);                 // -> object local space
+      // HYSTERESIS: if this finger is already engaged, test with extra reach so it
+      // HOLDS; only release when the finger pulls well clear. This stops the servo
+      // from chattering back-and-forth at the contact edge.
+      const c = objectContact(_tipW, fg.tipR, engaged[f] ? COLLIDE.holdPad : 0);
+      engaged[f] = c > 0;
+      contact[f] = engaged[f];
+      // FULL force whenever engaged: a proportional force is too weak to FEEL, and
+      // the thumb/ring/pinky touch a sphere shallowly. Engaged -> 100% -> servo to
+      // its full angle, and it HOLDS there until release. Decisive and steady.
+      forces[f]  = engaged[f] ? 1.0 : 0;
+    }
+  } else {
+    for (let f = 0; f < 5; f++) engaged[f] = false;
+  }
+
+  // A real grab = thumb + at least one other finger in contact.
+  const others = contact[1] + contact[2] + contact[3] + contact[4];
+  isGrabbing = contact[0] && others >= 1;
+
+  // Send a per-finger force packet only when the pattern meaningfully changes.
+  const key = forces.map(v => Math.round(v * 20)).join(',');
+  if (key !== lastForceKey){
+    lastForceKey = key;
+    glove.queueForce(buildForcePacketPerFinger(forces));
+    // Show exactly what each finger is sending (255 = engage, 0 = release).
+    console.log('[force→glove] ' + ['T','I','M','R','P']
+      .map((n,i) => n + '=' + Math.round((forces[i]||0) * 255)).join(' '));
+  }
+
+  // Visual feedback: tint the tips that are touching, light the object, update badge.
+  // (The rigged-model fingertips are bones with no material -> guard before tinting.)
+  for (let f = 0; f < 5; f++){
+    const fg = glove.hand.fingers[f];
+    const m = fg && fg.tip && fg.tip.material;
+    if (!m) continue;
+    m.emissive.setHex(contact[f] ? 0xc0563f : 0x000000);
+    m.emissiveIntensity += ((contact[f] ? 0.55 : 0.0) - m.emissiveIntensity) * 0.3;
+  }
+  document.getElementById('grabBadge').classList.toggle('on', isGrabbing);
+  const gs = document.getElementById('grabState');
+  if (gs){
+    const any = contact.some(Boolean);
+    gs.textContent = isGrabbing ? 'grabbing' : (any ? 'contact' : 'open');
+    gs.style.color = isGrabbing ? 'var(--clay)' : (any ? 'var(--amber)' : '');
   }
   if (currentObject){
-    const t = isGrabbing ? 0.9 : 0.06;
-    currentObject.mesh.material.emissiveIntensity += (t - currentObject.mesh.material.emissiveIntensity) * 0.2;
-    const s = isGrabbing ? 0.92 : 1.0;   // squeeze when grabbed
-    const base = currentObject.type === 'mouse' ? [1.25,0.55,1.7] : [1,1,1];
-    currentObject.mesh.scale.set(base[0]*s, base[1]*s, base[2]*s);
+    const m = currentObject.mesh;
+    const t = isGrabbing ? 0.35 : (contact.some(Boolean) ? 0.12 : 0.0);
+    m.material.emissiveIntensity += (t - m.material.emissiveIntensity) * 0.2;
+    const squeeze = isGrabbing ? 0.93 : 1.0, b = m._baseScale;
+    m.scale.set(b[0]*squeeze, b[1]*squeeze, b[2]*squeeze);
   }
 }
 
 /* ============================================================================
-   8. SIMULATION MODE  ── synthPacket() (in the protocol module) builds a REAL
-      firmware-format packet so the whole pipeline (parse -> hand -> grab ->
-      force) runs offline. simEnabled just toggles whether we use it.
+   7. UI / DEBUG
    ========================================================================== */
-let simEnabled = true;
-
-/* ============================================================================
-   9. UI / DEBUG PANEL
-   ========================================================================== */
-const statusEl = document.getElementById('status');
-const statusLabel = document.getElementById('statusLabel');
+const connectBtn = document.getElementById('connectBtn');
+const pill = document.getElementById('pill'), pillLabel = document.getElementById('pillLabel');
 function setStatus(kind, label){
-  statusEl.className = 'status ' + ({ sim:'is-sim', link:'is-link', conn:'is-conn', err:'is-err' }[kind] || '');
-  statusLabel.textContent = label;
+  pill.className = 'pill ' + ({ live:'live', busy:'busy', err:'err' }[kind] || '');
+  pillLabel.textContent = label;
 }
 function showBanner(msg){
   const b = document.getElementById('banner');
   b.textContent = msg ? '⚠ ' + msg : ''; b.classList.toggle('show', !!msg);
 }
-function syncSimBtn(){ document.getElementById('simBtn').textContent = 'Sim: ' + (simEnabled ? 'On' : 'Off'); }
 
-// build meter rows once
-const FINGER_NAMES = ['THM','IDX','MID','RNG','PNK'];
-const bendBars = document.getElementById('bendBars');
-const forceBars = document.getElementById('forceBars');
-const bendRefs = [], forceRefs = [];
+const FINGER_NAMES  = ['Thumb','Index','Middle','Ring','Pinky'];
+const FINGER_FULL   = ['Thumb','Index','Middle','Ring','Pinky'];
+const FINGER_COLORS = ['#4a8c3f','#c98a3a','#c0563f','#74b568','#2a2318'];  // distinct on beige
+function byId(id){ return document.getElementById(id); }
+
+// --- build the per-finger rows for each mode ---
+const bendBars = byId('bendBars'), forceBars = byId('forceBars'), servoRows = byId('servoRows'), legend = byId('legend');
+const bendRefs = [], forceRefs = [], servoRefs = [];
 FINGER_NAMES.forEach((nm, i) => {
   bendBars.insertAdjacentHTML('beforeend',
-    `<div class="meter"><span class="name">${nm}·M</span><div class="track"><div class="fill" id="bm${i}"></div></div><span class="val" id="bmv${i}">0</span></div>
-     <div class="meter pip"><span class="name">${nm}·P</span><div class="track"><div class="fill" id="bp${i}"></div></div><span class="val" id="bpv${i}">0</span></div>`);
+    `<div class="meter"><span class="nm">${nm}·mcp</span><div class="track"><div class="fill" id="bm${i}"></div></div><span class="v" id="bmv${i}">0</span></div>
+     <div class="meter pip"><span class="nm">${nm}·pip</span><div class="track"><div class="fill" id="bp${i}"></div></div><span class="v" id="bpv${i}">0</span></div>`);
   forceBars.insertAdjacentHTML('beforeend',
-    `<div class="meter force"><span class="name">${nm}</span><div class="track"><div class="fill" id="fb${i}"></div></div><span class="val" id="fbv${i}">0</span></div>`);
-  bendRefs.push({ m:document.getElementById('bm'+i), mv:document.getElementById('bmv'+i),
-                  p:document.getElementById('bp'+i), pv:document.getElementById('bpv'+i) });
-  forceRefs.push({ f:document.getElementById('fb'+i), fv:document.getElementById('fbv'+i) });
+    `<div class="meter force"><span class="nm">${nm}</span><div class="track"><div class="fill" id="fb${i}"></div></div><span class="v" id="fbv${i}">0</span></div>`);
+  servoRows.insertAdjacentHTML('beforeend',
+    `<div class="servo"><span class="nm">${nm}</span><div class="track"><div class="fill" id="sv${i}"></div></div><span class="v" id="svv${i}">0°</span></div>`);
+  legend.insertAdjacentHTML('beforeend',
+    `<span><i style="background:${FINGER_COLORS[i]}"></i>${FINGER_FULL[i]}</span>`);
+  bendRefs.push({ m:byId('bm'+i), mv:byId('bmv'+i), p:byId('bp'+i), pv:byId('bpv'+i) });
+  forceRefs.push({ f:byId('fb'+i), fv:byId('fbv'+i) });
+  servoRefs.push({ f:byId('sv'+i), v:byId('svv'+i) });
 });
 
-let lastForceBytes = ZERO_FORCE;
-let debugAcc = 0;
-function updateDebug(state, dt){
-  debugAcc += dt; if (debugAcc < 0.066) return; debugAcc = 0;   // ~15 Hz DOM updates
-
-  // battery
-  const pct = Math.round(Math.min(state.battery, 100));
-  document.getElementById('battFill').style.width = pct + '%';
-  document.getElementById('battPct').textContent = pct + '%';
-
-  // finger bend
-  for (let i = 0; i < 5; i++){
-    const fg = state.fingers[i];
-    bendRefs[i].m.style.width = (fg.mcp*100) + '%';
-    bendRefs[i].p.style.width = (fg.pip*100) + '%';
-    bendRefs[i].mv.textContent = (fg.mcpRaw ?? Math.round(fg.mcp*4095));
-    bendRefs[i].pv.textContent = (fg.pipRaw ?? Math.round(fg.pip*4095));
-  }
-  // force (per finger from last packet, engage byte shown as the bar)
-  for (let i = 0; i < 5; i++){
-    const eng = lastForceBytes[i*2] / 255;
-    forceRefs[i].f.style.width = (eng*100) + '%';
-    forceRefs[i].fv.textContent = lastForceBytes[i*2];
-  }
-  document.getElementById('btnVal').textContent = state.button;
-  document.getElementById('joyVal').textContent = `${state.joy.x}, ${state.joy.y}`;
-  document.getElementById('oriVal').textContent = state.orientation
-    ? `${state.orientation.roll.toFixed(0)}° ${state.orientation.pitch.toFixed(0)}° ${state.orientation.yaw.toFixed(0)}°`
-    : 'n/a';
-  document.getElementById('forceHex').textContent =
-    Array.from(lastForceBytes).map(b => b.toString(16).padStart(2,'0')).join(' ');
+// --- mode (tab) switching ---
+let activeMode = 'telemetry';
+for (const t of document.querySelectorAll('#tabs .tab')){
+  t.addEventListener('click', () => {
+    activeMode = t.dataset.mode;
+    for (const x of document.querySelectorAll('#tabs .tab')) x.classList.toggle('active', x === t);
+    for (const m of document.querySelectorAll('.mode')) m.classList.toggle('active', m.dataset.mode === activeMode);
+    if (activeMode === 'graph') drawScope();   // immediate redraw on switch
+  });
+}
+// optional deep-link: open index.html#graph (or #raw, #ble, …) on a given mode
+{
+  const m = (location.hash || '').replace('#','');
+  const t = document.querySelector(`.tab[data-mode="${m}"]`);
+  if (t) t.click();
 }
 
-document.getElementById('dataNote').innerHTML =
-  'Stream: 32-byte packet (44 w/ IMU), little-endian. Force: 10-byte, 2/finger ' +
-  '(engage·force). Firmware uses the engage byte as the servo angle.';
+// --- oscilloscope history + drawing ---
+const SCOPE_LEN = 180;                          // samples kept (~12 s at 15 Hz)
+const hist = [[],[],[],[],[]];                  // per-finger avg-curl history
+function pushHistory(state){
+  for (let f = 0; f < 5; f++){
+    const v = (state.fingers[f].mcp + state.fingers[f].pip) / 2;
+    const h = hist[f]; h.push(v); if (h.length > SCOPE_LEN) h.shift();
+  }
+}
+const scope = byId('scope');
+function drawScope(){
+  const ctx = scope.getContext('2d');
+  const dpr = Math.min(devicePixelRatio, 2);
+  const w = scope.clientWidth, h = scope.clientHeight;
+  if (!w || !h) return;
+  if (scope.width !== w*dpr || scope.height !== h*dpr){ scope.width = w*dpr; scope.height = h*dpr; }
+  ctx.setTransform(dpr,0,0,dpr,0,0);
+  ctx.clearRect(0,0,w,h);
 
-/* ---- controls wiring ---- */
-const connectBtn = document.getElementById('connectBtn');
+  const padL = 28, padT = 8, padB = 14;            // gutters for axis labels
+  const plotW = w - padL, plotH = h - padT - padB;
+  const yOf = v => padT + (1 - v) * plotH;         // v in 0..1, bent=1 at top
+  const xOf = i => padL + (i/(SCOPE_LEN-1)) * plotW;
+
+  // horizontal gridlines + curl % labels
+  ctx.font = '9px "JetBrains Mono", monospace';
+  ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
+  for (let g = 0; g <= 4; g++){
+    const v = g/4, y = yOf(v);
+    ctx.strokeStyle = (g === 0) ? 'rgba(42,35,24,0.18)' : 'rgba(74,140,63,0.10)';
+    ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(padL, y); ctx.lineTo(w, y); ctx.stroke();
+    ctx.fillStyle = 'rgba(42,35,24,0.4)'; ctx.fillText(Math.round(v*100), padL - 4, y);
+  }
+  // vertical time gridlines
+  ctx.strokeStyle = 'rgba(74,140,63,0.06)';
+  for (let g = 1; g <= 4; g++){ const x = padL + plotW*g/4; ctx.beginPath(); ctx.moveTo(x, padT); ctx.lineTo(x, h-padB); ctx.stroke(); }
+
+  // traces (straight=bottom, fully bent=top)
+  for (let f = 0; f < 5; f++){
+    const data = hist[f]; if (data.length < 2) continue;
+    ctx.strokeStyle = FINGER_COLORS[f]; ctx.lineWidth = 2; ctx.lineJoin = 'round'; ctx.lineCap = 'round';
+    ctx.beginPath();
+    for (let i = 0; i < data.length; i++){ const x = xOf(i), y = yOf(data[i]); i === 0 ? ctx.moveTo(x,y) : ctx.lineTo(x,y); }
+    ctx.stroke();
+  }
+  // axis captions
+  ctx.fillStyle = 'rgba(42,35,24,0.32)'; ctx.textBaseline = 'bottom';
+  ctx.textAlign = 'left';  ctx.fillText('curl %  ·  ← older', padL + 2, h - 1);
+  ctx.textAlign = 'right'; ctx.fillText('now →', w - 2, h - 1);
+
+  // idle hint so the empty scope reads intentionally before a glove connects
+  if (typeof glove !== 'undefined' && !glove.connected){
+    ctx.fillStyle = 'rgba(42,35,24,0.30)'; ctx.font = '12px "JetBrains Mono", monospace';
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillText('waiting for glove…', padL + plotW/2, padT + plotH/2);
+  }
+}
+
+// --- per-mode updaters (only the active one runs each tick) ---
+function updTelemetry(state){
+  const pct = Math.round(Math.min(state.battery, 100));
+  byId('battFill').style.width = pct + '%';
+  byId('battPct').textContent = glove.connected ? pct + '%' : '—';
+  for (let i = 0; i < 5; i++){
+    const fg = state.fingers[i];
+    // Drive the bars from the actual sensor reading (raw/4095), so a 0 reading is
+    // a truly empty bar — not the idle hand-pose value used to render the 3D model.
+    bendRefs[i].m.style.width = ((fg.mcpRaw / 4095) * 100) + '%';
+    bendRefs[i].p.style.width = ((fg.pipRaw / 4095) * 100) + '%';
+    bendRefs[i].mv.textContent = fg.mcpRaw ?? 0;
+    bendRefs[i].pv.textContent = fg.pipRaw ?? 0;
+  }
+  byId('btnVal').textContent = glove.connected ? state.button : '—';
+  byId('joyVal').textContent = glove.connected ? `${state.joy.x}, ${state.joy.y}` : '—';
+  // joystick pad dot (center when idle); invert Y so "up" is up
+  byId('joyDot').style.left = ((glove.connected ? state.joy.x/255 : 0.5) * 100) + '%';
+  byId('joyDot').style.top  = ((glove.connected ? (1 - state.joy.y/255) : 0.5) * 100) + '%';
+  byId('oriVal').textContent = state.orientation
+    ? `${state.orientation.roll.toFixed(0)}° ${state.orientation.pitch.toFixed(0)}° ${state.orientation.yaw.toFixed(0)}°` : 'n/a';
+}
+function updForce(){
+  byId('writeRate').textContent = glove.writesPerSec;
+  for (let i = 0; i < 5; i++){
+    forceRefs[i].f.style.width = (lastForceBytes[i*2]/255*100) + '%';
+    forceRefs[i].fv.textContent = lastForceBytes[i*2];
+  }
+  byId('forceHex').textContent = Array.from(lastForceBytes).map(b => b.toString(16).padStart(2,'0')).join(' ');
+}
+function updServos(){
+  // firmware maps the engage byte (0..255) directly to the servo angle (0..180)
+  for (let i = 0; i < 5; i++){
+    const deg = Math.round(lastForceBytes[i*2] / 255 * 180);
+    servoRefs[i].f.style.width = (deg/180*100) + '%';
+    servoRefs[i].v.textContent = deg + '°';
+  }
+}
+function updRaw(){
+  const raw = glove.lastRaw;
+  if (!raw){ byId('rawDump').textContent = '— no packet yet —'; byId('rawDecode').innerHTML = ''; return; }
+  let out = '';
+  for (let i = 0; i < raw.length; i += 8){
+    let line = `<span class="off">${i.toString().padStart(2,'0')}</span>  `;
+    for (let j = i; j < Math.min(i+8, raw.length); j++) line += raw[j].toString(16).padStart(2,'0') + ' ';
+    out += line + '\n';
+  }
+  byId('rawDump').innerHTML = out;
+  const s = glove.state;
+  byId('rawDecode').innerHTML =
+    `<div class="kv"><span>battery</span><b>${s.battery}</b></div>` +
+    `<div class="kv"><span>bend (raw)</span><b>${s.fingers.map(f=>f.mcpRaw+'/'+f.pipRaw).join(' ')}</b></div>` +
+    `<div class="kv"><span>splay (raw)</span><b>${s.splayRaw.join(' ')}</b></div>` +
+    `<div class="kv"><span>button</span><b>${s.button}</b></div>` +
+    `<div class="kv"><span>joystick</span><b>${s.joy.x}, ${s.joy.y}</b></div>` +
+    `<div class="kv"><span>bytes</span><b>${raw.length} (${raw.length>=44?'with IMU':'no IMU'})</b></div>`;
+}
+function updBle(){
+  byId('bleName').textContent  = glove.device?.name || (glove.connected ? 'connected' : '—');
+  byId('bleState').textContent = glove.connected ? 'connected' : 'disconnected';
+  byId('bleRate').textContent  = glove.connected ? glove.streamHz : '—';
+  byId('blePkts').textContent  = glove.totalPackets;
+  byId('bleBps').textContent   = glove.connected ? (glove.streamHz * (glove.lastRaw?.length || 32)) + ' B/s' : '0 B/s';
+  byId('bleBad').textContent   = glove.badPackets;
+  byId('bleSvc').textContent   = GATT.service;
+  byId('bleNotify').textContent= GATT.notify;
+  byId('bleWrite').textContent = GATT.write;
+}
+
+let debugAcc = 0;
+function updateDebug(state, dt){
+  pushHistory(state);                       // always feed the scope so it has history when opened
+  debugAcc += dt; if (debugAcc < 0.066) return; debugAcc = 0;   // ~15 Hz DOM/redraw
+  switch (activeMode){
+    case 'telemetry': updTelemetry(state); break;
+    case 'graph':     byId('rateG').textContent = (glove.connected ? glove.streamHz : '—') + ' Hz'; drawScope(); break;
+    case 'force':     updForce(); break;
+    case 'servos':    updServos(); break;
+    case 'raw':       updRaw(); break;
+    case 'ble':       updBle(); break;
+  }
+}
+
+/* ---- controls ---- */
 connectBtn.addEventListener('click', async () => {
   if (glove.connected){ glove.disconnect(); return; }
   connectBtn.disabled = true; connectBtn.textContent = 'Connecting…';
-  try {
-    await glove.connect();
-    connectBtn.textContent = 'Disconnect';
-  } catch(err){
-    // User backing out of the device chooser is NOT an error — don't alarm them.
+  try { await glove.connect(); connectBtn.textContent = 'Disconnect'; }
+  catch(err){
     const cancelled = err && (err.name === 'NotFoundError' || /cancel/i.test(err.message || ''));
-    if (cancelled){
-      setStatus(simEnabled ? 'sim' : 'err', simEnabled ? 'Simulation' : 'Idle');
-      showBanner('');
-    } else {
-      setStatus('err', 'Failed');
-      showBanner(err.message || 'Connection failed.');
-    }
+    if (cancelled){ setStatus('err', 'Disconnected'); showBanner(''); }
+    else { setStatus('err', 'Failed'); showBanner(err.message || 'Connection failed.'); }
     connectBtn.textContent = 'Connect Glove';
-    if (!navigator.bluetooth) connectBtn.disabled = true;
-  } finally {
-    if (navigator.bluetooth) connectBtn.disabled = false;   // re-enable unless BLE is wholly unavailable
-  }
-});
-document.getElementById('simBtn').addEventListener('click', () => {
-  simEnabled = !simEnabled; syncSimBtn();
-  if (!glove.connected) setStatus(simEnabled ? 'sim' : 'err', simEnabled ? 'Simulation' : 'Idle');
+  } finally { if (navigator.bluetooth) connectBtn.disabled = false; }
 });
 for (const b of document.querySelectorAll('[data-obj]')) b.addEventListener('click', () => spawnObject(b.dataset.obj));
 document.getElementById('clearObj').addEventListener('click', clearObject);
-
-function idleState(){
-  return { battery:0, fingers:Array.from({length:5},()=>({mcp:0,pip:0,mcpRaw:0,pipRaw:0})),
-           splayRaw:[2048,2048,2048,2048], button:0, joy:{x:128,y:128}, orientation:null };
-}
+document.getElementById('resetView').addEventListener('click', () => {
+  camera.position.copy(CAM0); controls.target.copy(TGT0); controls.update();   // snap back to default framing
+});
 
 /* ============================================================================
-   10. MAIN LOOP
+   8. MAIN LOOP
    ========================================================================== */
-const glove = new Glove({ role:'right', side:1 });
-const gloves = [glove];                      // <-- add a 2nd glove here later (drop-in)
+// side:-1 mirrors the base rig into a RIGHT hand (the device is "GloveRight").
+// Three.js flips winding for negative-determinant matrices, so lighting stays correct.
+const glove = new Glove({ role:'right', side:-1 });
+const gloves = [glove];                      // add a 2nd glove here later (drop-in)
 
-let rateCount = 0, rateTimer = 0, lastWriteCount = 0;
-glove._writeTick = 0;
-let prev = performance.now() / 1000;
-let simT = 0;
-
-// dedicated force-write pump (latest-only, rate-limited) — independent of frame rate
 setInterval(() => { glove._flushForce(); }, FORCE_WRITE_INTERVAL_MS);
 
+let prev = performance.now() / 1000, rateTimer = 0, lastWriteCount = 0;
 function loop(){
   requestAnimationFrame(loop);
   resize();
   const now = performance.now() / 1000;
   const dt = Math.min(now - prev, 0.05); prev = now;
-  simT += dt;
 
-  // choose the data source: live BLE > simulation > idle
-  let state;
-  if (glove.connected){ state = glove.state; }
-  else if (simEnabled){ state = parsePacket(synthPacket(simT)); }
-  else { state = idleState(); }
-
-  glove.hand.apply(state);
-  updateGrab(state);
+  // Data source: the real glove when connected, otherwise a calm idle pose.
+  const state = glove.connected ? glove.state : idleState();
+  // gentle idle sway only while disconnected (live data drives the hand once connected)
+  const sway = glove.connected ? null : { x: Math.sin(now*0.5)*0.05, y: Math.sin(now*0.35)*0.10 };
+  glove.hand.apply(state, sway);
+  updateGrab();
   updateDebug(state, dt);
 
-  // stream-rate readout
   rateTimer += dt;
   if (rateTimer >= 0.5){
-    document.getElementById('rate').textContent = glove.connected ? Math.round(glove.packetCount / rateTimer) : '—';
-    document.getElementById('writeRate').textContent = Math.round((glove._writeTick - lastWriteCount) / rateTimer);
+    glove.streamHz = Math.round(glove.packetCount / rateTimer);
+    glove.writesPerSec = Math.round((glove._writeTick - lastWriteCount) / rateTimer);
     lastWriteCount = glove._writeTick; glove.packetCount = 0; rateTimer = 0;
+    // Mirror live counters into the on-screen debug panel header.
+    if (window.dbgStat) window.dbgStat(
+      (glove.connected ? 'LIVE' : 'idle') + ' · ' + glove.streamHz + 'Hz · pkt ' +
+      glove.totalPackets + ' · bad ' + glove.badPackets + ' · ' +
+      (glove.lastRaw ? glove.lastRaw.length + 'B' : '—'));
   }
 
-  if (currentObject) objHolder.rotation.y += dt * 0.3;   // gentle idle spin
   controls.update();
   renderer.render(scene, camera);
 }
 
-// startup: Simulation Mode is live immediately so there's always a demo.
-syncSimBtn();
-if (!navigator.bluetooth){
-  showBanner('Web Bluetooth not available here — Simulation Mode is running. Use Chrome/Edge over https or localhost to connect a real glove.');
+/* ============================================================================
+   9. LIVE TUNING PANEL — sliders for the hand + objects, applied in real time.
+   Tap "tune" (bottom-right). "copy values" dumps the current config as JSON (to
+   the clipboard + debug log) so a good calibration can be baked in as defaults.
+   ========================================================================== */
+function setupTuning(){
+  const body  = document.getElementById('tuneBody');
+  const panel = document.getElementById('tune');
+  document.getElementById('tuneToggle').onclick = () => panel.classList.toggle('hide');
+  document.getElementById('tuneClose').onclick  = () => panel.classList.add('hide');
+
+  const applyRoot = () => {
+    const h = glove.hand;
+    if (h && h.root){
+      h.root.scale.setScalar(RIGGED.scale);
+      h.root.rotation.set(RIGGED.rot.x, RIGGED.rot.y, RIGGED.rot.z);
+      h.root.position.set(RIGGED.pos.x, RIGGED.pos.y, RIGGED.pos.z);
+    }
+  };
+  const respawn = () => { if (currentObject) spawnObject(currentObject.type); };
+
+  const sec = (t) => { const d = document.createElement('div'); d.className = 'sec'; d.textContent = t; body.appendChild(d); };
+  const slider = (label, min, max, step, get, set) => {
+    const row = document.createElement('div'); row.className = 'row';
+    const l = document.createElement('label'); l.textContent = label;
+    const r = document.createElement('input'); r.type = 'range'; r.min = min; r.max = max; r.step = step; r.value = get();
+    const v = document.createElement('span'); v.className = 'val'; v.textContent = (+get()).toFixed(2);
+    r.oninput = () => { const x = parseFloat(r.value); set(x); v.textContent = x.toFixed(2); };
+    row.append(l, r, v); body.appendChild(row);
+  };
+
+  sec('Rigged hand (model)');
+  slider('scale', 1, 30, 0.5,    () => RIGGED.scale,  v => { RIGGED.scale = v; applyRoot(); });
+  slider('rot X', -3.2, 3.2, 0.02, () => RIGGED.rot.x, v => { RIGGED.rot.x = v; applyRoot(); });
+  slider('rot Y', -3.2, 3.2, 0.02, () => RIGGED.rot.y, v => { RIGGED.rot.y = v; applyRoot(); });
+  slider('rot Z', -3.2, 3.2, 0.02, () => RIGGED.rot.z, v => { RIGGED.rot.z = v; applyRoot(); });
+  slider('pos X', -2, 2, 0.02,   () => RIGGED.pos.x,  v => { RIGGED.pos.x = v; applyRoot(); });
+  slider('pos Y', -2, 2, 0.02,   () => RIGGED.pos.y,  v => { RIGGED.pos.y = v; applyRoot(); });
+  slider('pos Z', -2, 2, 0.02,   () => RIGGED.pos.z,  v => { RIGGED.pos.z = v; applyRoot(); });
+  slider('mcp max', 0, 3, 0.05,  () => RIGGED.mcpMax, v => RIGGED.mcpMax = v);
+  slider('pip max', 0, 3, 0.05,  () => RIGGED.pipMax, v => RIGGED.pipMax = v);
+  // curl axis (x/y/z) + sign
+  {
+    const row = document.createElement('div'); row.className = 'row';
+    const l = document.createElement('label'); l.textContent = 'curl axis';
+    const s = document.createElement('select');
+    ['x','y','z'].forEach(a => { const o = document.createElement('option'); o.value = a; o.textContent = a; s.appendChild(o); });
+    s.value = RIGGED.curlAxis.x ? 'x' : RIGGED.curlAxis.y ? 'y' : 'z';
+    s.onchange = () => RIGGED.curlAxis.set(s.value==='x'?1:0, s.value==='y'?1:0, s.value==='z'?1:0);
+    const b = document.createElement('button'); b.className = 'seg'; b.textContent = RIGGED.curlSign>0 ? 'sign +' : 'sign −';
+    b.onclick = () => { RIGGED.curlSign *= -1; b.textContent = RIGGED.curlSign>0 ? 'sign +' : 'sign −'; };
+    row.append(l, s, b); body.appendChild(row);
+  }
+
+  sec('Procedural hand (fallback)');
+  slider('mcp max', 0, 2.5, 0.05, () => KIN.mcpMax, v => KIN.mcpMax = v);
+  slider('pip max', 0, 2.5, 0.05, () => KIN.pipMax, v => KIN.pipMax = v);
+  slider('splay max', 0, 0.8, 0.02, () => KIN.splayMax, v => KIN.splayMax = v);
+  slider('thumb mcp', 0, 2, 0.05, () => KIN.thumbMcpMax, v => KIN.thumbMcpMax = v);
+  slider('thumb pip', 0, 2, 0.05, () => KIN.thumbPipMax, v => KIN.thumbPipMax = v);
+  slider('thumb oppose', -2, 2, 0.05, () => KIN.thumbOppose, v => KIN.thumbOppose = v);
+  slider('thumb fold', -2, 2, 0.05, () => KIN.thumbFold, v => KIN.thumbFold = v);
+
+  sec('Motion');
+  slider('smooth', 0.03, 1, 0.01, () => KIN.smooth, v => KIN.smooth = v);
+
+  sec('Object placement (grasp)');
+  slider('grasp X', -1.5, 1.5, 0.02, () => glove.hand.graspAnchor.position.x, v => glove.hand.graspAnchor.position.x = v);
+  slider('grasp Y', -1.5, 1.5, 0.02, () => glove.hand.graspAnchor.position.y, v => glove.hand.graspAnchor.position.y = v);
+  slider('grasp Z', -1.5, 1.5, 0.02, () => glove.hand.graspAnchor.position.z, v => glove.hand.graspAnchor.position.z = v);
+
+  sec('Object sizes');
+  slider('ball',  0.2, 1.3, 0.02, () => OBJ_SIZE.ball,  v => { OBJ_SIZE.ball = v;  respawn(); });
+  slider('cube',  0.2, 1.3, 0.02, () => OBJ_SIZE.cube,  v => { OBJ_SIZE.cube = v;  respawn(); });
+  slider('mouse', 0.2, 1.3, 0.02, () => OBJ_SIZE.mouse, v => { OBJ_SIZE.mouse = v; respawn(); });
+
+  sec('Collision');
+  slider('contact pad', 0, 0.5, 0.01, () => COLLIDE.contactPad, v => COLLIDE.contactPad = v);
+  slider('hold pad',    0, 0.6, 0.01, () => COLLIDE.holdPad,    v => COLLIDE.holdPad = v);
+
+  sec('Force (per object)');
+  slider('ball force',  0, 1, 0.02, () => FORCE_PROFILES.ball.force,  v => FORCE_PROFILES.ball.force = v);
+  slider('cube force',  0, 1, 0.02, () => FORCE_PROFILES.cube.force,  v => FORCE_PROFILES.cube.force = v);
+  slider('mouse force', 0, 1, 0.02, () => FORCE_PROFILES.mouse.force, v => FORCE_PROFILES.mouse.force = v);
+
+  document.getElementById('tuneCopy').onclick = () => {
+    const a = glove.hand.graspAnchor.position;
+    const cfg = {
+      RIGGED: { scale:RIGGED.scale, rot:RIGGED.rot, pos:RIGGED.pos,
+                curlAxis: RIGGED.curlAxis.x?'x':RIGGED.curlAxis.y?'y':'z', curlSign:RIGGED.curlSign,
+                mcpMax:RIGGED.mcpMax, pipMax:RIGGED.pipMax },
+      KIN: { mcpMax:KIN.mcpMax, pipMax:KIN.pipMax, splayMax:KIN.splayMax, thumbMcpMax:KIN.thumbMcpMax,
+             thumbPipMax:KIN.thumbPipMax, thumbOppose:KIN.thumbOppose, thumbFold:KIN.thumbFold, smooth:KIN.smooth },
+      graspAnchor: { x:+a.x.toFixed(3), y:+a.y.toFixed(3), z:+a.z.toFixed(3) },
+      OBJ_SIZE: { ...OBJ_SIZE }, COLLIDE: { ...COLLIDE },
+      FORCE: { ball:FORCE_PROFILES.ball.force, cube:FORCE_PROFILES.cube.force, mouse:FORCE_PROFILES.mouse.force },
+    };
+    const txt = JSON.stringify(cfg, null, 2);
+    console.log('[tune] copy this back to me:\n' + txt);
+    if (navigator.clipboard) navigator.clipboard.writeText(txt).catch(()=>{});
+  };
 }
-spawnObject('ball');     // start with something to grab
+
+// startup
+spawnObject('ball');
+setupTuning();
+setStatus('err', 'Disconnected');
+if (!navigator.bluetooth){
+  showBanner('Web Bluetooth not available here — use Chrome/Edge over https or localhost to connect the glove.');
+  connectBtn.disabled = true;
+}
 loop();
 </script>
 </body>

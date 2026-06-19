@@ -191,8 +191,10 @@ void chargerTask(void* pvParameters) {
 
 #else  // ENABLE_CHARGER not defined: no-op stubs so the firmware still links.
 
+#include <Arduino.h>   // pulls in FreeRTOS (vTaskDelete) + NULL
+
 bool bq_init(void) { return false; }
 bool bq_read_status(ChargerStatus* o) { if (o) o->present = false; return false; }
-void chargerTask(void* pvParameters) { vTaskDelete(NULL); }
+void chargerTask(void* pvParameters) { (void)pvParameters; vTaskDelete(NULL); }
 
 #endif // ENABLE_CHARGER

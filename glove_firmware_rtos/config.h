@@ -68,7 +68,9 @@
 //  shrink these later.
 // -----------------------------------------------------------------------------
 #define STACK_SERVO     3072
-#define STACK_HALL      4096   // read_hall() puts a 32x5x3 sample buffer on its stack
+#define STACK_HALL      8192   // analogRead's ADC oneshot driver + averaging is stack-hungry
+                               // on first call; the original ran this on the 8KB loopTask, so
+                               // 4096 was too tight here and overflowed on hallTask's first run.
 #define STACK_BLE       4096   // BLE notify + packet building
 #define STACK_IMU       4096   // sensor fusion uses floats / atan2 / logf
 #define STACK_CHARGER   3072   // I2C reads + logging
@@ -80,16 +82,45 @@
 //  Instead we use vTaskDelayUntil(), which sleeps the task precisely so the CPU
 //  is free for other work in the meantime.
 // -----------------------------------------------------------------------------
-#define HALL_PERIOD_MS  20    // sample finger sensors at 50 Hz
-#define BLE_PERIOD_MS   30    // push a BLE notification ~33 times/second
+#define HALL_PERIOD_MS  16    // sample finger sensors ~60 Hz (16-sample avg needs a bit
+                              // longer per cycle; this keeps hallTask blocking so it
+                              // yields to the other core-1 tasks instead of starving them)
+#define BLE_PERIOD_MS   16    // push a BLE notification ~60 times/second (matches hall)
 #define IMU_PERIOD_MS   10    // IMU sensor fusion at 100 Hz (fast = less drift)
+
+// -----------------------------------------------------------------------------
+//  SERVO HAPTICS  --  binary "stall-torque" force feedback
+// -----------------------------------------------------------------------------
+//  Design (intentionally simple): we DON'T care about engage-point or a force
+//  gradient. The web app decides, per finger, ONE thing: is that fingertip
+//  touching the object's hitbox? If yes, we drive that finger's servo to its
+//  fully-ENGAGED angle and HOLD it there. The finger physically can't push the
+//  servo past that hold point, so the servo sits at stall -> maximum resisting
+//  torque = "you feel the object". On release we return to RELAXED.
+//
+//  The host sends one byte per finger (0 = no touch, 255 = touch). We threshold
+//  it, so any value >= SERVO_ENGAGE_THRESH means "engage".
+//
+//  >>> IF YOUR LINKAGE RESISTS THE OTHER WAY <<<  (servo must pull to 0, not 180,
+//  to oppose the finger), just SWAP these two angle values.
+#define SERVO_RELAXED_DEG    0     // no contact: tendon slack, finger moves freely
+#define SERVO_ENGAGED_DEG    180   // contact: drive to full travel and HOLD (stall)
+#define SERVO_ENGAGE_THRESH  64    // incoming force byte >= this counts as "touching"
+
+//  Bring-up diagnostic: when defined, setup() sweeps EACH servo one at a time
+//  (only one moving at once -> tiny current draw), logging which pin it's driving.
+//  Use this to tell a DEAD servo/pin (never moves even solo) apart from a POWER
+//  problem (moves fine solo, but stalls when several engage together). Comment it
+//  out for normal operation.
+#define SERVO_SWEEP_TEST
 
 // -----------------------------------------------------------------------------
 //  IMU (IIM-42652) -- sensor fusion
 // -----------------------------------------------------------------------------
 //  ENABLE_IMU compiles in the real driver + fusion task. Comment it out to build
 //  without the RAK12033-IIM42652 library (the task then becomes a no-op stub).
-#define ENABLE_IMU
+//  DISABLED: ruling out any I2C hang during boot -- glove streams finger data fine.
+//#define ENABLE_IMU
 
 //  Complementary-filter weight: how much we TRUST the gyro (smooth but drifts)
 //  vs. the accelerometer (absolute but noisy under motion). 0.98 => 98% gyro,
@@ -110,8 +141,8 @@
 //  value seen on every sensor. Those become the min/max used to scale readings.
 //  Left OFF by default so a normal boot uses the hard-coded ranges in hall.cpp
 //  (matching how your original .ino actually shipped -- the call was commented).
-//#define HALL_CALIBRATE_ON_BOOT
-#define HALL_CALIBRATE_MS 10000   // 10 second open/close window
+#define HALL_CALIBRATE_ON_BOOT
+#define HALL_CALIBRATE_MS 15000   // 15 second open/close window
 
 // -----------------------------------------------------------------------------
 //  SERIAL PLOTTING (for Tools -> Serial Plotter)
@@ -134,7 +165,7 @@
 //  reports PASS/FAIL over Serial + BLE, THEN starts normal operation. Leave it
 //  on for bench bring-up; comment it out for everyday/production use so boots are
 //  fast and the servos don't sweep every time.
-#define RUN_SELFTEST_ON_BOOT
+// #define RUN_SELFTEST_ON_BOOT
 #define SELFTEST_BLE_WAIT_MS  30000   // wait this long for a BLE client; else Serial-only
 
 // -----------------------------------------------------------------------------
@@ -142,7 +173,8 @@
 // -----------------------------------------------------------------------------
 //  Comment out ENABLE_CHARGER to build without the charger driver (the task then
 //  becomes a no-op stub and battery_lvl stays 0).
-#define ENABLE_CHARGER
+//  DISABLED: ruling out any I2C hang during boot -- charger not needed for the demo.
+//#define ENABLE_CHARGER
 
 #define CHARGER_I2C_ADDR   0x6A   // BQ25887 7-bit address (datasheet rev B; rev A misprinted 0x6B)
 #define CHARGER_SDA        40     // shares the IMU's I2C bus -- VERIFY against YOUR schematic

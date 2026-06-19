@@ -172,8 +172,10 @@ void imuTask(void* pvParameters) {
 
 #else  // ENABLE_IMU not defined: provide empty stubs so links still resolve.
 
+#include <Arduino.h>   // pulls in FreeRTOS (vTaskDelete) + NULL
+
 bool initImu(void) { return false; }   // no IMU compiled in
-void imuTask(void* pvParameters) { vTaskDelete(NULL); }
+void imuTask(void* pvParameters) { (void)pvParameters; vTaskDelete(NULL); }
 bool imu_sample(float*, float*, float*, float*, float*, float*) { return false; }
 
 #endif // ENABLE_IMU

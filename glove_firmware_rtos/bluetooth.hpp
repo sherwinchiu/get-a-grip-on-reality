@@ -13,6 +13,11 @@
 
 // Connection state callbacks: these SET/CLEAR the BLE_CONNECTED_BIT event bit
 // instead of poking a shared global directly.
+//
+//  NOTE: arduino-esp32 core 3.x calls BOTH the one-arg and two-arg forms of
+//  onConnect/onDisconnect (see BLEServer.cpp ESP_GATTS_CONNECT_EVT, which calls
+//  onConnect(this) then onConnect(this, param)). Overriding just the one-arg
+//  form is therefore sufficient -- it runs on every connect/disconnect.
 class ServerCallback : public BLEServerCallbacks {
 public:
     void onConnect(BLEServer* pServer) override;

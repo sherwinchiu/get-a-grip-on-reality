@@ -1,136 +1,94 @@
-# Haptic Glove — Web Bluetooth Demo
+# Force-Feedback Glove — Web Bluetooth Demo
 
-A single self-contained `index.html` that connects to the force-feedback VR glove
-(ESP32-S3) over **Web Bluetooth**, renders a live 3D articulated hand from the sensor
-stream, and writes force-feedback commands back to the glove's servos. Built for a live
-interview demo — **Simulation Mode runs with no hardware**, so there's always a fallback.
+A single self-contained `index.html` that connects to the glove (ESP32-S3) over **Web
+Bluetooth**, renders a live 3D articulated hand from the sensor stream, lets you grab objects,
+and writes **force-feedback** commands back to the servos. No build step; Three.js loads from
+a CDN. Architecture + low-level detail: see [`../ARCHITECTURE.md`](../ARCHITECTURE.md).
 
-No build step. Three.js loads from a CDN. Everything is in `index.html`.
+> This demo is about the **real glove** — there's no simulation mode. When no glove is
+> connected it shows a calm idle hand and a "connect your glove" prompt; the moment you
+> connect, your fingers (and, with the IMU, your wrist) map live.
 
----
+## Requirements
 
-## Run it
+- **Chrome or Edge** (incl. **Android Chrome**). Web Bluetooth is **not** available on
+  Safari/iOS or the Meta Quest browser.
+- A **secure context** — the page must be served over **https** or **localhost**. Opening the
+  file directly (`file://…`) will not allow Bluetooth.
 
-Web Bluetooth requires a **secure context** — you must serve the file over `https` or
-`localhost`. Opening the file directly (`file://…`) will **not** work for BLE (Simulation
-Mode still works from `file://`, but just serve it — it's one command).
+## Run / deploy
 
-**On your computer (localhost):**
+**On your phone (the real demo) — easiest, no PC needed at showtime:**
+1. Drag **`../get-a-grip-demo.zip`** onto **https://app.netlify.com/drop** → you get a
+   permanent `https://…netlify.app` link (no account, no git push).
+2. Open that link in **Chrome on your phone**.
+
+**On your computer (local dev):**
 ```bash
 cd mobile-demo
-python3 -m http.server 8000
-# then open  http://localhost:8000  in Chrome
+python3 -m http.server 8000     # then open http://localhost:8000 in Chrome
 ```
 
-**From your phone (to connect the real glove on Android Chrome):**
-The phone needs a secure origin too. Easiest options:
-- **USB + adb reverse** (recommended, counts as localhost on the phone):
-  ```bash
-  adb reverse tcp:8000 tcp:8000
-  # on the phone's Chrome, open  http://localhost:8000
-  ```
-- **Or** put the file on any `https` host (GitHub Pages, ngrok `https` tunnel, etc.) and
-  open that URL on the phone. A plain `http://<laptop-LAN-IP>:8000` will **not** allow
-  Web Bluetooth — it's not a secure context.
+## Connect the glove
 
----
-
-## Connect the glove (important)
-
-1. Power on the glove (it advertises as **`FYDPGloveRight`**).
-2. **Do NOT pair the glove in the phone's Android Bluetooth settings.** Web Bluetooth
-   claims the device itself through Chrome's in-page chooser, and a pre-existing OS-level
-   pairing can interfere with that. If you previously paired it in system settings,
-   **remove/"Forget" it there** first.
-3. In the app, tap **Connect Glove**. A Chrome device chooser pops up *inside the page* —
-   pick **FYDPGloveRight** from that list (not from system settings).
-4. On connect, the status pill turns green and Simulation Mode switches off automatically.
-   If the link drops, the app falls back to Simulation and you can tap Connect to retry.
-
-**Browser support:** Chrome / Edge only (incl. Android Chrome). Web Bluetooth is **not**
-available in Safari / iOS.
-
----
-
-## Simulation Mode
-
-Toggle **Sim: On/Off** in the top bar. When on (the default at startup), the hand, grab
-detection, and force pipeline are driven by *synthetic* data — it even synthesises a real
-32-byte packet and runs it through the same parser, so the full visual works with no glove
-attached. Build/verify the demo here first; connecting a real glove just swaps the data
-source.
-
----
+1. Power on the glove (it advertises as **`GloveRight`** / `GloveLeft`).
+2. **Do NOT pair it in the phone's system Bluetooth settings** — Web Bluetooth claims the
+   device through Chrome's in-page chooser, and an OS-level pairing interferes. "Forget" it
+   there if present.
+3. Tap **Connect Glove** → pick **GloveRight** from the chooser that pops up *in the page*.
+4. Move your fingers → the hand mirrors them. If the firmware IMU is on, tilt your hand and
+   the whole hand tilts too. If the link drops, you'll see the "connect your glove" prompt
+   again — just tap Connect to reconnect.
 
 ## Using the demo
 
-- **Spawn** a Ball, Cube, or Mouse — each has its own force profile (editable in the
-  `FORCE_PROFILES` config near the top of the script).
-- **Grab**: curl the thumb + at least one finger past the threshold while an object is
-  spawned → the app writes that object's force profile to the glove so the servos resist.
-  Open your hand to release.
-- The **Sensor Telemetry** and **Force Output** panels show the live data pipeline: raw
-  per-joint bend, splay, battery, button, joystick, orientation (if the firmware IMU is
-  on), and the exact 10-byte force packet last sent.
+- **Spawn** a Ball, Cube, or Mouse (each has its own force profile, editable in
+  `FORCE_PROFILES` in `glove-protocol.js`).
+- **Grab**: as you close your hand, each fingertip is **collision-tested against the object's
+  hitbox** — a finger resists only when it actually touches, at its own contact point
+  (touching tips tint red; thumb + a finger = GRAB). Each servo gets its own force. Open to release.
+- **Live data** tabs (the sidebar "modes"): **Telemetry** (bend/battery/button/joystick/orientation),
+  **Graph** (live oscilloscope of finger curl), **Force** (force bars + the raw 10-byte packet),
+  **Servos** (commanded angles), **Raw** (hex dump + decoded fields), **BLE** (link stats + UUIDs).
+- **⟲ reset view** (bottom-right of the 3D stage) snaps the camera back if it gets dragged askew.
 
-Force writes are rate-limited to ~1 every 9 ms (latest value only) to match the firmware's
-BLE expectations and avoid congestion.
-
----
+Force writes are rate-limited to ~1 every 9 ms (latest value only, non-overlapping) to match
+the firmware's BLE pacing.
 
 ## Files & tests
 
 | File | Role |
 |------|------|
-| `index.html` | The app: UI, Three.js hand, BLE connection, render loop |
-| `glove-protocol.js` | **Dependency-free** protocol layer — packet parse/encode, force packing, grab logic, sim source. Imported by the app *and* the tests, so there's one source of truth for the firmware byte contract. |
-| `tests/glove-protocol.test.mjs` | 22 unit tests (Node built-in runner, no deps) |
+| `index.html` | the app: UI, Three.js hand, BLE connection, render loop, the 6 data modes |
+| `glove-protocol.js` | dependency-free protocol layer (parse/encode, force packing, grab logic) — imported by the app **and** the tests, so there's one source of truth for the byte contract |
+| `tests/glove-protocol.test.mjs` | 22 Node tests |
 
-Run the tests (Node 18+):
 ```bash
-cd mobile-demo
-node --test
+cd mobile-demo && node --test
 ```
-They cover parse/encode round-trips, **little-endian** decoding, 0–4095 clamping, the
-optional 44-byte IMU tail, splay mapping, the 10-byte force packet, grab detection, and the
-simulation source — plus a **live cross-check that the demo's UUIDs and device name match
-the firmware's `bluetooth.hpp`/`.cpp`** (so the two can't silently drift apart). What unit
-tests *can't* prove is the live radio/WebGL/servo path — that's why Simulation Mode exists
-as the verifiable, always-works fallback.
+The tests cover parse/encode round-trips, **little-endian** decoding, clamping, the optional
+44-byte IMU tail, splay mapping, the force packet, grab detection — plus a **cross-check that
+the demo's UUIDs and device name match the firmware's `bluetooth.hpp`/`.cpp`**, so the two
+can't silently drift apart. (They can't prove the live radio/WebGL/servo path — that needs the
+glove on a bench.)
 
-## BLE contract (read from `glove_firmware_rtos/`)
+## BLE contract (mirrors `glove_firmware_rtos/`)
 
 - **Service** `7241bbc8-8ed8-4729-85ea-0ffc63248b4f`
 - **Notify (glove → app)** `34797cc3-9e74-42e1-a669-be3cbdbae64d`
 - **Write (app → glove)** `36ade52d-4a4c-4b23-9d64-78e6a3e2cdd4`
-- **Device name** `FYDPGloveRight`
+- **Device name** `GloveRight` / `GloveLeft`
 
-**Input packet — 32 bytes, little-endian 16-bit values:**
+**Input packet — 32 bytes (44 with IMU), little-endian:** `[0]` battery · `[1–20]` bend
+(5×2 `uint16` 0–4095) · `[21–28]` splay (4×`uint16`) · `[29]` button · `[30–31]` joystick ·
+`[32–43]` *optional* roll/pitch/yaw `float32`.
 
-| Bytes | Field |
-|-------|-------|
-| 0     | battery (0–255; firmware sends 0–100) |
-| 1–20  | finger bend — 5 fingers × 2 joints (MCP, PIP), thumb→pinky, `uint16` 0–4095 |
-| 21–28 | splay — 4 × `uint16` 0–4095 |
-| 29    | button (0/1) |
-| 30–31 | joystick x, y (0–255) |
-| 32–43 | *optional* roll/pitch/yaw `float32` — only present when the firmware's IMU is enabled (packet becomes 44 bytes) |
-
-> Two corrections vs. the original brief: the base packet is **32 bytes (not 33)**, and the
-> **joystick is at bytes 30–31** (there's no spare byte 30). The parser reads the optional
-> IMU tail when present and ignores it otherwise.
-
-**Force packet — 10 bytes, app → glove:** 2 bytes per finger (thumb→pinky): `[engage%, force%]`,
-each 0–255. *Note:* the current firmware uses the **engage byte directly as the servo angle**
-(`0–255 → 0–180°`) and ignores the force byte — adjust `buildForcePacket()` if you change
-the firmware's force model.
-
----
+**Force packet — 10 bytes:** 2 per finger `[engage, force]`, 0–255. *Note:* the firmware uses
+the engage byte directly as the servo angle (`0–255 → 0–180°`).
 
 ## Extending to two gloves
 
-The code is structured for a clean second-glove drop-in but is **wired for one** glove
-today. Connection handling, the 3D hand, and the force writer all live in a `Glove` class
-that's instantiated once into a `gloves` array. To add the left hand later: construct a
-second `new Glove({ role:'left', side:-1 })`, push it into `gloves`, and connect it with a
-`namePrefix`/role filter — the hand model already mirrors via its `side` scale.
+Wired for one glove today, but built for a clean second: connection, hand, and force logic all
+live in a `Glove` class instantiated once into a `gloves` array. To add the left hand: construct
+`new Glove({ role:'left', side:-1 })` (the hand model mirrors via its `side` scale), push it,
+and connect it by name. See `../ARCHITECTURE.md` §3.

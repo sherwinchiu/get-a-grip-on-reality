@@ -26,7 +26,7 @@ test('GATT UUIDs are the expected lowercase 128-bit values', () => {
   assert.equal(P.GATT.service, '7241bbc8-8ed8-4729-85ea-0ffc63248b4f');
   assert.equal(P.GATT.notify,  '34797cc3-9e74-42e1-a669-be3cbdbae64d');
   assert.equal(P.GATT.write,   '36ade52d-4a4c-4b23-9d64-78e6a3e2cdd4');
-  assert.equal(P.GATT.deviceNamePrefix, 'FYDPGlove');
+  assert.equal(P.GATT.deviceNamePrefix, 'Glove');
   for (const u of [P.GATT.service, P.GATT.notify, P.GATT.write]) {
     assert.match(u, /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/);
   }
@@ -159,6 +159,17 @@ test('buildForcePacket clamps out-of-range profiles', () => {
 test('ZERO_FORCE is 10 zero bytes (release)', () => {
   assert.equal(P.ZERO_FORCE.length, 10);
   assert.ok(P.ZERO_FORCE.every(b => b === 0));
+});
+
+test('buildForcePacketPerFinger: each finger gets its own byte, clamped', () => {
+  const a = P.buildForcePacketPerFinger([1.0, 0.0, 0.5, 2.0, -1]);
+  assert.equal(a.length, 10);
+  assert.equal(a[0], 255, 'thumb full');
+  assert.equal(a[2], 0,   'index none');
+  assert.equal(a[4], Math.round(0.5*255), 'middle half');
+  assert.equal(a[6], 255, 'ring clamped from 2.0');
+  assert.equal(a[8], 0,   'pinky clamped from -1');
+  for (let f = 0; f < 5; f++) assert.equal(a[f*2], a[f*2+1], 'engage==force byte');
 });
 
 /* ===========================================================================
