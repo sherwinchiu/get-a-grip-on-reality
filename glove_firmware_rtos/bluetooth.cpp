@@ -23,6 +23,7 @@ bool g_imuPresent = false;
 static BLEServer*         pServer         = nullptr;
 static BLECharacteristic* pTxCharacteristic = nullptr;  // we NOTIFY through this
 static BLECharacteristic* pRxCharacteristic = nullptr;  // host WRITES haptics here
+static BLECharacteristic* pBattCharacteristic = nullptr;  // slow battery/charger diag (notify+read)
 
 // -----------------------------------------------------------------------------
 //  CONNECTION STATE CALLBACKS
@@ -104,6 +105,15 @@ void initBluetooth(void) {
     pRxCharacteristic->setCallbacks(new RxCallbacks());
     pRxCharacteristic->addDescriptor(new BLE2902());
 
+    // BATT: low-rate battery/charger diagnostics. NOTIFY (pushed every few seconds by
+    // chargerTask) + READ (so a client can grab the latest value immediately on
+    // connect, before the next notify). A separate characteristic keeps this slow
+    // diagnostic data off the latency-critical sensor stream.
+    pBattCharacteristic = pService->createCharacteristic(
+        CHARACTERISTIC_UUID_BATT,
+        BLECharacteristic::PROPERTY_NOTIFY | BLECharacteristic::PROPERTY_READ);
+    pBattCharacteristic->addDescriptor(new BLE2902());
+
     pService->start();
 
     // Start advertising so phones/PCs can find us.
@@ -143,83 +153,106 @@ void bleNotifyText(const char* msg) {
     pTxCharacteristic->notify();
 }
 
+bool bleNotifyBattery(const uint8_t* data, uint8_t len) {
+    if (!pBattCharacteristic) return false;
+    // Always store the latest value so a READ returns current data even between
+    // notifies / before the client subscribes.
+    pBattCharacteristic->setValue((uint8_t*)data, len);
+    if (!bleConnected()) return false;
+    pBattCharacteristic->notify();
+    return true;
+}
+
+// Core-0 task: block on the battery mailbox, notify on each fresh snapshot. Keeps
+// every BLE notify on this core even though chargerTask (the producer) is on core 1.
+void batteryNotifyTask(void* pvParameters) {
+    BatteryPacket bp;
+    for (;;) {
+        // xQueueOverwrite from chargerTask wakes this receive; we drain + notify once
+        // per update (every ~5 s), so this task is idle/blocked almost all the time.
+        if (xQueueReceive(batteryMailbox, &bp, portMAX_DELAY) == pdTRUE) {
+            bleNotifyBattery((const uint8_t*)&bp, sizeof(bp));
+        }
+    }
+}
+
 // -----------------------------------------------------------------------------
-//  THE TASK : consumer/transmitter
+//  bleTask helpers -- keep the task body to just the loop; each step is a function.
+// -----------------------------------------------------------------------------
+
+// Overlay the freshest IMU orientation + raw accel onto the packet and return how many
+// bytes to send: no IMU -> only the original fields (up to .roll) = 32 B; IMU present ->
+// the full InputData (orientation + accel) = 56 B. PEEK keeps the mailbox value (the IMU
+// task overwrites it at 100 Hz); if the peek fails, pkg keeps its zeroed defaults.
+static size_t pack_imu(InputData* pkg) {
+    if (!g_imuPresent) return offsetof(InputData, roll);     // 32 B, no orientation tail
+    Orientation att;
+    if (xQueuePeek(imuMailbox, &att, 0) == pdTRUE) {
+        pkg->roll = att.roll; pkg->pitch = att.pitch; pkg->yaw = att.yaw;
+        pkg->ax   = att.ax;   pkg->ay    = att.ay;    pkg->az  = att.az;
+    }
+    return sizeof(InputData);                                // 56 B, orientation + accel
+}
+
+// Pull the freshest sensor snapshot (timeout 0: skip if nothing new), overlay the IMU,
+// and notify it. Returns true if a packet was sent, false if the mailbox had nothing.
+static bool transmit_sensor_packet(void) {
+    InputData pkg;
+    if (xQueueReceive(sensorMailbox, &pkg, 0) != pdTRUE) return false;
+    pTxCharacteristic->setValue((uint8_t*)&pkg, pack_imu(&pkg));
+    pTxCharacteristic->notify();
+    return true;
+}
+
+// Log connect/disconnect transitions and re-advertise once a client leaves.
+static void handle_connection_change(bool connected, bool* wasConnected) {
+    if (!connected && *wasConnected) {
+        vTaskDelay(pdMS_TO_TICKS(500));     // let the BLE stack settle
+        pServer->startAdvertising();
+        logf("[BLE] client left -> re-advertising\n");
+    } else if (connected && !*wasConnected) {
+        logf("[BLE] client connected\n");
+    }
+    *wasConnected = connected;
+}
+
+// -----------------------------------------------------------------------------
+//  THE TASK : consumer/transmitter -- just the loop now.
 // -----------------------------------------------------------------------------
 void bleTask(void* pvParameters) {
-    InputData pkg;
     bool wasConnected = false;
     const TickType_t period = pdMS_TO_TICKS(BLE_PERIOD_MS);
 
-    // Diagnostic counters so Serial proves whether we are actually transmitting:
-    //   sent  = notify() calls succeeded   miss = mailbox had no fresh packet
+    // Diagnostic counters so Serial proves we're transmitting:
+    //   sent climbing  -> firmware IS notifying (any "no data" is host-side)
+    //   miss climbing  -> hall mailbox empty (hallTask stalled)
     uint32_t sent = 0, miss = 0;
     TickType_t lastReport = xTaskGetTickCount();
+    TickType_t lastWake   = xTaskGetTickCount();
 
     for (;;) {
-        // Are we connected? bleConnected() checks BOTH the callback's event bit
-        // AND the server's live connection count, so a missed callback can't make
-        // us sit silent on an open link.
+        // bleConnected() checks the callback's event bit AND the server's live
+        // connection count, so a missed callback can't make us sit silent.
         bool connected = bleConnected();
+        handle_connection_change(connected, &wasConnected);
 
-        // --- Handle a fresh DISCONNECT: kick advertising back on. ---
-        if (!connected && wasConnected) {
-            vTaskDelay(pdMS_TO_TICKS(500));   // let the BLE stack settle
-            pServer->startAdvertising();
-            logf("[BLE] client left -> re-advertising\n");
-        }
-        // --- Handle a fresh CONNECT. ---
-        if (connected && !wasConnected) {
-            logf("[BLE] client connected\n");
-        }
-        wasConnected = connected;
-
-        // --- If connected, transmit the freshest sensor packet. ---
         if (connected) {
-            // Pull the latest snapshot from the mailbox. Timeout 0: if the hall
-            // task hasn't produced anything new since last time, skip this round
-            // rather than waiting.
-            if (xQueueReceive(sensorMailbox, &pkg, 0) == pdTRUE) {
-                // Overlay the freshest IMU orientation onto the packet. We PEEK
-                // (not receive) so the mailbox keeps the value -- the IMU task
-                // runs at 100 Hz and overwrites it anyway. If the IMU is
-                // disabled the peek fails and pkg keeps its zeroed defaults.
-                // Decide the packet LENGTH based on whether we have an IMU:
-                //   no IMU  -> send only the original fields (up to .roll) = 32B
-                //   has IMU -> overlay orientation and send the full 44B packet
-                size_t len = offsetof(InputData, roll);   // 32 bytes (no IMU)
-                if (g_imuPresent) {
-                    Orientation att;
-                    if (xQueuePeek(imuMailbox, &att, 0) == pdTRUE) {
-                        pkg.roll  = att.roll;
-                        pkg.pitch = att.pitch;
-                        pkg.yaw   = att.yaw;
-                    }
-                    len = sizeof(InputData);              // 44 bytes (with IMU)
-                }
-                pTxCharacteristic->setValue((uint8_t*)&pkg, len);
-                pTxCharacteristic->notify();
+            if (transmit_sensor_packet()) {
                 sent++;
             } else {
                 miss++;
             }
         }
 
-        // Once per second, report whether we're actually streaming. If `sent`
-        // keeps climbing the firmware IS notifying -> any "no data" problem is on
-        // the host/web side. If `miss` climbs instead, the hall mailbox is empty
-        // (hallTask stalled). If neither moves, we're not reaching this branch
-        // (not connected).
         if (xTaskGetTickCount() - lastReport >= pdMS_TO_TICKS(1000)) {
             logf("[BLE] tx: sent=%lu miss=%lu connected=%d\n",
-                 (unsigned long)sent, (unsigned long)miss, (int)(wasConnected ? 1 : 0));
+                 (unsigned long)sent, (unsigned long)miss, (int)connected);
             sent = 0;
             miss = 0;
             lastReport = xTaskGetTickCount();
         }
 
-        // Sleep ~30 ms; cheap fixed-rate loop. (vTaskDelay is fine here -- a few
-        // ms of jitter on the transmit cadence is harmless.)
-        vTaskDelay(period);
+        // Fixed-rate cadence anchored to an absolute schedule (like imuTask/hallTask).
+        vTaskDelayUntil(&lastWake, period);
     }
 }
